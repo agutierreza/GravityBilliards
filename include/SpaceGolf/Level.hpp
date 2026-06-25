@@ -44,6 +44,18 @@ public:
     Level(int numPlanets, double width, double height);
 
     /**
+     * @brief Appends procedurally generated random planets to the existing level.
+     * 
+     * Operates identically to the procedural constructor, but preserves existing
+     * planets and ensures new ones don't overlap with them.
+     * 
+     * @param numPlanets The exact number of planets to add.
+     * @param width The maximum width of the play area.
+     * @param height The maximum height of the play area.
+     */
+    void addRandomPlanets(int numPlanets, double width, double height);
+
+    /**
      * @brief Validates if a proposed planet intersects with any existing planets.
      * 
      * This function is used during procedural generation to ensure a minimum 

@@ -113,24 +113,7 @@ int main(int argc, char* argv[]) {
     int numRandomPlanets = randomPlanetsOpt.value_or(fixedPlanets.empty() ? 10 : 0);
 
     if (numRandomPlanets > 0) {
-        std::uniform_int_distribution<> massDist(50, 500);
-        std::uniform_real_distribution<> xDist(0.0, width);
-        std::uniform_real_distribution<> yDist(0.0, height);
-        
-        int maxAttempts = 1000;
-        for (int i = 0; i < numRandomPlanets; ++i) {
-            for (int attempt = 0; attempt < maxAttempts; ++attempt) {
-                Planet p(massDist(gen), {xDist(gen), yDist(gen)});
-                if (p.position.x - p.radius < 0 || p.position.x + p.radius > width ||
-                    p.position.y - p.radius < 0 || p.position.y + p.radius > height) {
-                    continue;
-                }
-                if (level.isValidPlanetPosition(p)) {
-                    level.planets.push_back(p);
-                    break;
-                }
-            }
-        }
+        level.addRandomPlanets(numRandomPlanets, width, height);
     }
 
     if (!startPos) {

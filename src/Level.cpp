@@ -6,6 +6,10 @@ namespace SpaceGolf {
 Level::Level(const std::vector<Planet>& initialPlanets) : planets(initialPlanets) {}
 
 Level::Level(int numPlanets, double width, double height) {
+    addRandomPlanets(numPlanets, width, height);
+}
+
+void Level::addRandomPlanets(int numPlanets, double width, double height) {
     std::random_device rd;
     std::mt19937 gen(rd());
     
