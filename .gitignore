@@ -1,0 +1,13 @@
+# Build output
+build/
+*.exe
+*.dll
+*.lib
+
+# Editor and IDE
+.vscode/
+.vs/
+
+# Diagnostic output
+exports/
+visualization.svg
