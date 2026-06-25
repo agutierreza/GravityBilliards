@@ -37,11 +37,17 @@ void Simulation::step(const Level& level, Vector2D& pos, Vector2D& vel) const {
         double proyX = vel.dot(p);
         double proyY = vel.dot(pOrtog);
         
-        Vector2D Ux = p * proyX;
-        Vector2D Uy = pOrtog * proyY;
+        // Restitution threshold: if impact is very slow, do not bounce to allow sleeping
+        if (proyX < 0.0 && proyX > -0.5) {
+            proyX = 0.0;
+        } else {
+            proyX = -proyX / bounceDamping;
+        }
         
-        // Bounce! Invert normal component and apply damping
-        vel = ((Ux * -1.0) + Uy) / bounceDamping;
+        Vector2D Ux = p * proyX;
+        Vector2D Uy = pOrtog * (proyY / bounceDamping);
+        
+        vel = Ux + Uy;
         
         pos += vel * dt;
     } else {
@@ -69,14 +75,21 @@ SimulationResult Simulation::simulateUntilStop(const Level& level, Vector2D star
     
     double elapsed = 0.0;
     bool stopped = false;
+    double timeBelowThreshold = 0.0;
     
     while (elapsed < timeoutSeconds) {
         step(level, pos, vel);
         elapsed += dt;
         
         if (vel.magnitudeSquared() < (stopVelocityThreshold * stopVelocityThreshold)) {
-            stopped = true;
-            break;
+            timeBelowThreshold += dt;
+            // Require velocity to remain below threshold for 15.0 time units continuously
+            if (timeBelowThreshold >= 15.0) {
+                stopped = true;
+                break;
+            }
+        } else {
+            timeBelowThreshold = 0.0;
         }
     }
     

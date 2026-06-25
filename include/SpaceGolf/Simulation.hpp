@@ -62,7 +62,10 @@ public:
     Simulation() = default;
     
     /**
-     * @brief Performs a single integration step.
+     * @brief Performs a single integration step, handling gravity and collision.
+     * 
+     * Includes a restitution threshold to prevent micro-bouncing on low-velocity impacts.
+     * 
      * @param level The planet layout.
      * @param pos Current position (modified in place).
      * @param vel Current velocity (modified in place).
@@ -82,7 +85,9 @@ public:
     Vector2D predictPosition(const Level& level, Vector2D startPos, Vector2D startVelocity, double time) const;
     
     /**
-     * @brief Integrates physics continuously until the particle's velocity falls below `stopVelocityThreshold`.
+     * @brief Integrates physics continuously until the particle's velocity remains below `stopVelocityThreshold` for 15 consecutive frames.
+     * 
+     * The 15-frame requirement prevents premature stops during bounce apexes where velocity momentarily drops near zero.
      * 
      * @param level The planet layout.
      * @param startPos Initial particle position.
