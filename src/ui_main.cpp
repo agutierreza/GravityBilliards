@@ -80,6 +80,7 @@ int main(void)
 
     std::vector<TracePoint> trace;
     bool needsTraceUpdate = true;
+    int stopFrameIdx = -1;
     
     std::string exportMessage = "";
     float exportMessageTimer = 0.0f;
@@ -268,22 +269,20 @@ int main(void)
         if (needsTraceUpdate) {
             Vector2D particlePos(startX, startY);
             Vector2D particleVel(velX, velY);
+            
+            // 1. Query the engine for the true stop time 
+            SimulationResult result = sim.simulateUntilStop(level, particlePos, particleVel, 5000.0);
+            
+            // 2. Fetch the trace up to the timeout for visualization
             trace = sim.getTrace(level, particlePos, particleVel, 0.0, 5000.0);
-            needsTraceUpdate = false;
-        }
-
-        // Find stop frame marker
-        int stopFrameIdx = -1;
-        if (!trace.empty()) {
-            double threshSq = actualStopThreshold * actualStopThreshold;
-            for (size_t i = 0; i < trace.size(); ++i) {
-                if (trace[i].time >= checkAfterTimeFloat) {
-                    if (trace[i].velocity.magnitudeSquared() < threshSq) {
-                        stopFrameIdx = (int)i;
-                        break;
-                    }
-                }
+            
+            // 3. Mark the stop frame natively from the engine's result
+            stopFrameIdx = -1;
+            if (result.stopped) {
+                stopFrameIdx = (int)result.timeElapsed;
             }
+            
+            needsTraceUpdate = false;
         }
 
         if (isPlaying && !trace.empty()) {
