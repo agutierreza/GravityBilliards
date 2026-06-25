@@ -11,6 +11,7 @@ add_library(SpaceGolfPhysics
     src/Planet.cpp
     src/Level.cpp
     src/Simulation.cpp
+    src/Scenario.cpp
 )
 
 target_include_directories(SpaceGolfPhysics PUBLIC

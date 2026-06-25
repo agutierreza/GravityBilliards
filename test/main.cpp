@@ -9,6 +9,7 @@
 #include <nlohmann/json.hpp>
 #include "SpaceGolf/Level.hpp"
 #include "SpaceGolf/Simulation.hpp"
+#include "SpaceGolf/Scenario.hpp"
 
 using namespace SpaceGolf;
 
@@ -64,19 +65,16 @@ int main(int argc, char* argv[]) {
             nlohmann::json j;
             try {
                 f >> j;
-                if (j.contains("planets")) {
-                    for (const auto& p : j["planets"]) {
-                        Planet planet(p["mass"].get<int>(), Vector2D(p["position"]["x"].get<double>(), p["position"]["y"].get<double>()));
-                        if (p.contains("radius")) planet.radius = p["radius"];
-                        fixedPlanets.push_back(planet);
-                    }
+                Scenario s = Scenario::fromJson(j);
+                if (!s.level.planets.empty()) {
+                    fixedPlanets = s.level.planets;
                 }
                 if (j.contains("particle")) {
-                    startPos = Vector2D(j["particle"]["startPosition"]["x"].get<double>(), j["particle"]["startPosition"]["y"].get<double>());
-                    startVel = Vector2D(j["particle"]["startVelocity"]["x"].get<double>(), j["particle"]["startVelocity"]["y"].get<double>());
+                    startPos = s.particleStartPos;
+                    startVel = s.particleStartVel;
                 }
                 if (j.contains("simulation") && j["simulation"].contains("stopVelocityThreshold")) {
-                    customStopThreshold = j["simulation"]["stopVelocityThreshold"];
+                    customStopThreshold = s.stopVelocityThreshold;
                 }
             } catch (const std::exception& e) {
                 std::cerr << "Failed to parse JSON config: " << e.what() << "\n";

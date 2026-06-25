@@ -4,6 +4,7 @@
 #include "raygui.h"
 #include "SpaceGolf/Level.hpp"
 #include "SpaceGolf/Simulation.hpp"
+#include "SpaceGolf/Scenario.hpp"
 #include <vector>
 #include <string>
 #include <fstream>
@@ -146,34 +147,21 @@ int main(void)
                         nlohmann::json j;
                         f >> j;
                         
-                        if (j.contains("planets")) {
-                            level.planets.clear();
-                            for (const auto& p : j["planets"]) {
-                                Planet planet(p["mass"].get<int>(), Vector2D(p["position"]["x"].get<double>(), p["position"]["y"].get<double>()));
-                                if (p.contains("radius")) planet.radius = p["radius"];
-                                level.planets.push_back(planet);
-                            }
+                        Scenario s = Scenario::fromJson(j);
+                        if (!s.level.planets.empty()) {
+                            level.planets = s.level.planets;
                             numPlanetsFloat = (float)level.planets.size();
                         }
                         
-                        if (j.contains("particle")) {
-                            startX = j["particle"]["startPosition"]["x"].get<float>();
-                            startY = j["particle"]["startPosition"]["y"].get<float>();
-                            velX = j["particle"]["startVelocity"]["x"].get<float>();
-                            velY = j["particle"]["startVelocity"]["y"].get<float>();
-                            velAngle = std::atan2(velY, velX) * 180.0f / PI;
-                            velForce = std::sqrt(velX*velX + velY*velY);
-                        }
+                        startX = s.particleStartPos.x;
+                        startY = s.particleStartPos.y;
+                        velX = s.particleStartVel.x;
+                        velY = s.particleStartVel.y;
+                        velAngle = std::atan2(velY, velX) * 180.0f / PI;
+                        velForce = std::sqrt(velX*velX + velY*velY);
                         
-                        if (j.contains("simulation")) {
-                            if (j["simulation"].contains("stopVelocityThreshold")) {
-                                float threshold = j["simulation"]["stopVelocityThreshold"];
-                                logThresholdFloat = std::log10(threshold);
-                            }
-                            if (j["simulation"].contains("particleRadius")) {
-                                particleRadiusFloat = j["simulation"]["particleRadius"];
-                            }
-                        }
+                        logThresholdFloat = std::log10(s.stopVelocityThreshold);
+                        particleRadiusFloat = s.particleRadius;
                         
                         needsTraceUpdate = true;
                         playbackFrame = 0;
@@ -450,19 +438,14 @@ int main(void)
                 ssFilename << "export_" << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M%S") << ".json";
                 std::string filename = (exportDir / ssFilename.str()).string();
                 
-                nlohmann::json j;
-                j["simulation"]["stopVelocityThreshold"] = actualStopThreshold;
-                j["simulation"]["particleRadius"] = particleRadiusFloat;
-                j["particle"]["startPosition"] = {{"x", startX}, {"y", startY}};
-                j["particle"]["startVelocity"] = {{"x", velX}, {"y", velY}};
-                j["planets"] = nlohmann::json::array();
-                for (const auto& p : level.planets) {
-                    j["planets"].push_back({
-                        {"position", {{"x", p.position.x}, {"y", p.position.y}}},
-                        {"mass", p.mass},
-                        {"radius", p.radius}
-                    });
-                }
+                Scenario s;
+                s.level = level;
+                s.particleStartPos = {startX, startY};
+                s.particleStartVel = {velX, velY};
+                s.particleRadius = particleRadiusFloat;
+                s.stopVelocityThreshold = actualStopThreshold;
+                
+                nlohmann::json j = s.toJson();
                 
                 std::ofstream out(filename);
                 out << j.dump(4);
