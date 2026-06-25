@@ -20,11 +20,14 @@ struct Scenario {
 
     /**
      * @brief Parses a Scenario from a JSON object.
+     * @param j The nlohmann::json object containing the scenario data.
+     * @return A fully populated Scenario instance.
      */
     static Scenario fromJson(const nlohmann::json& j);
 
     /**
      * @brief Serializes the Scenario into a JSON object.
+     * @return An nlohmann::json object representing the scenario.
      */
     nlohmann::json toJson() const;
 };

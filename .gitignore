@@ -11,3 +11,7 @@ build/
 # Diagnostic output
 exports/
 visualization.svg
+dump.cpp
+
+# Generated documentation
+docs/
