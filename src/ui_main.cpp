@@ -16,6 +16,8 @@
 #include <filesystem>
 #include <nlohmann/json.hpp>
 
+#define ENABLE_GRAVITY_DEBUG_KNOBS 1
+
 using namespace SpaceGolf;
 
 // Helper to draw a slider with fine keyboard controls when hovering
@@ -86,6 +88,20 @@ int main(void)
     std::string exportMessage = "";
     float exportMessageTimer = 0.0f;
 
+    bool showGravityMap = false;
+    bool needsGravityMapUpdate = true;
+    const int mapResX = 128;
+    const int mapResY = 128;
+    Image gravityImage = GenImageColor(mapResX, mapResY, BLANK);
+    Texture2D gravityTexture = LoadTextureFromImage(gravityImage);
+
+#if ENABLE_GRAVITY_DEBUG_KNOBS
+    float dbgPercentileDeep = 0.058f;
+    float dbgPercentileShallow = 1.000f;
+    float dbgContrastPower = 1.00f; 
+    float dbgMaxAlpha = 137.0f;
+#endif
+
     // Neon-80s-Arcade Style Colors
     Color bgDark = {11, 0, 28, 255};          
     Color neonPink = {255, 0, 127, 255};      
@@ -124,6 +140,14 @@ int main(void)
         int currentHeight = GetScreenHeight();
         canvasWidth = currentWidth - uiPanelWidth;
         int canvasHeight = currentHeight - 60;
+
+        static Camera2D lastCamera = camera;
+        if (camera.offset.x != lastCamera.offset.x || camera.offset.y != lastCamera.offset.y ||
+            camera.target.x != lastCamera.target.x || camera.target.y != lastCamera.target.y ||
+            camera.zoom != lastCamera.zoom) {
+            needsGravityMapUpdate = true;
+            lastCamera = camera;
+        }
 
         // (Removed constant offset resetting so zoom-to-mouse works perfectly)
 
@@ -164,6 +188,7 @@ int main(void)
                         particleRadiusFloat = s.particleRadius;
                         
                         needsTraceUpdate = true;
+                        needsGravityMapUpdate = true;
                         playbackFrame = 0;
                         exportMessage = "Imported " + std::string(GetFileName(droppedFiles.paths[0]));
                         exportMessageTimer = 3.0f;
@@ -219,6 +244,7 @@ int main(void)
                 startY = clampedWorldMouse.y;
             } else if (draggedPlanetIndex != -1) {
                 level.planets[draggedPlanetIndex].position = {clampedWorldMouse.x, clampedWorldMouse.y};
+                needsGravityMapUpdate = true;
             }
             needsTraceUpdate = true;
         } else if (dragState == DragState::Minimap) {
@@ -253,6 +279,89 @@ int main(void)
         sim.particleRadius = particleRadiusFloat; // Sync radius
         float actualStopThreshold = std::pow(10.0f, logThresholdFloat);
         sim.stopVelocityThreshold = actualStopThreshold;
+
+        if (showGravityMap && needsGravityMapUpdate) {
+            Vector2 topLeft = GetScreenToWorld2D({0, 0}, camera);
+            Vector2 bottomRight = GetScreenToWorld2D({(float)canvasWidth, (float)canvasHeight}, camera);
+            
+            float widthWorld = bottomRight.x - topLeft.x;
+            float heightWorld = bottomRight.y - topLeft.y;
+            float stepX = widthWorld / mapResX;
+            float stepY = heightWorld / mapResY;
+            
+            Color* pixels = (Color*)gravityImage.data;
+            
+            // Pass 1: Calculate all potentials
+            int totalPixels = mapResX * mapResY;
+            std::vector<double> potentials(totalPixels);
+            
+            for (int y = 0; y < mapResY; ++y) {
+                float worldY = topLeft.y + y * stepY;
+                for (int x = 0; x < mapResX; ++x) {
+                    float worldX = topLeft.x + x * stepX;
+                    potentials[y * mapResX + x] = level.getGravityPotentialAt(Vector2D(worldX, worldY));
+                }
+            }
+            
+            // Pass 2: Find robust min and max using percentiles to ignore infinite spikes near centers
+            std::vector<double> sortedPotentials = potentials;
+            std::sort(sortedPotentials.begin(), sortedPotentials.end());
+            
+            // 2% and 95% percentiles
+            // sortedPotentials[0] is the most negative (deepest well)
+#if ENABLE_GRAVITY_DEBUG_KNOBS
+            int pDeepIdx = (int)(totalPixels * dbgPercentileDeep);
+            int pShallowIdx = (int)(totalPixels * dbgPercentileShallow);
+            if (pDeepIdx >= totalPixels) pDeepIdx = totalPixels - 1;
+            if (pShallowIdx >= totalPixels) pShallowIdx = totalPixels - 1;
+            if (pDeepIdx < 0) pDeepIdx = 0;
+            if (pShallowIdx < 0) pShallowIdx = 0;
+            double deepest = sortedPotentials[pDeepIdx]; 
+            double shallowest = sortedPotentials[pShallowIdx]; 
+#else
+            double deepest = sortedPotentials[(int)(totalPixels * 0.02)]; 
+            double shallowest = sortedPotentials[(int)(totalPixels * 0.95)]; 
+#endif
+            
+            // Prevent division by zero if the screen is totally flat
+            if (std::abs(shallowest - deepest) < 1.0) {
+                deepest = shallowest - 1.0;
+            }
+            
+            // Pass 3: Map to colors
+            for (int y = 0; y < mapResY; ++y) {
+                for (int x = 0; x < mapResX; ++x) {
+                    double p = potentials[y * mapResX + x];
+                    
+                    // Map potential between shallowest (0.0) and deepest (1.0)
+                    float normalized = (float)((p - shallowest) / (deepest - shallowest));
+                    if (normalized > 1.0f) normalized = 1.0f;
+                    if (normalized < 0.0f) normalized = 0.0f;
+                    
+#if ENABLE_GRAVITY_DEBUG_KNOBS
+                    normalized = std::pow(normalized, dbgContrastPower);
+#endif
+                    // Smoothstep for slightly richer contrast mid-tones
+                    normalized = normalized * normalized * (3.0f - 2.0f * normalized);
+                    
+                    // Gradient: Deep space (dark/cyan) -> Neon Pink (deep well)
+                    unsigned char r = (unsigned char)(normalized * 255);
+                    unsigned char g = (unsigned char)((1.0f - normalized) * 40); 
+                    unsigned char b = (unsigned char)((1.0f - normalized) * 150 + (normalized * 127)); 
+#if ENABLE_GRAVITY_DEBUG_KNOBS
+                    float alphaBase = 150.0f + normalized * 105.0f;
+                    if (alphaBase > dbgMaxAlpha) alphaBase = dbgMaxAlpha;
+                    unsigned char a = (unsigned char)alphaBase;
+#else
+                    unsigned char a = (unsigned char)(150 + normalized * 105); // Alpha from 150 to 255
+#endif
+                    
+                    pixels[y * mapResX + x] = {r, g, b, a};
+                }
+            }
+            UpdateTexture(gravityTexture, pixels);
+            needsGravityMapUpdate = false;
+        }
         
         if (needsTraceUpdate) {
             Vector2D particlePos(startX, startY);
@@ -286,6 +395,13 @@ int main(void)
         // 2. Render Phase
         BeginDrawing();
             ClearBackground(bgDark); 
+
+            if (showGravityMap) {
+                DrawTexturePro(gravityTexture, 
+                               {0, 0, (float)mapResX, (float)mapResY}, 
+                               {0, 0, (float)canvasWidth, (float)canvasHeight}, 
+                               {0, 0}, 0.0f, WHITE);
+            }
 
             // --- DRAW CANVAS (Camera View) ---
             BeginMode2D(camera);
@@ -338,6 +454,33 @@ int main(void)
             DrawText("LEVEL CONTROLS", panelX, currentY, 20, neonCyan);
             currentY += 30;
             
+            if (GuiToggle(Rectangle{(float)panelX, (float)currentY, 260, 25}, "Show Gravity Map", &showGravityMap)) {
+                if (showGravityMap) needsGravityMapUpdate = true;
+            }
+            currentY += 35;
+            
+#if ENABLE_GRAVITY_DEBUG_KNOBS
+            if (showGravityMap) {
+                DrawText("GRAVITY DEBUG KNOBS", panelX, currentY, 10, neonYellow);
+                currentY += 15;
+                GuiLabel(Rectangle{(float)panelX, (float)currentY, 80, 20}, "Deep %:");
+                if (DrawFineSlider(Rectangle{(float)panelX + 70, (float)currentY, 170, 20}, NULL, TextFormat("%.3f", dbgPercentileDeep), &dbgPercentileDeep, 0.0f, 0.5f, 0.01f)) needsGravityMapUpdate = true;
+                currentY += 25;
+                
+                GuiLabel(Rectangle{(float)panelX, (float)currentY, 80, 20}, "Shallow %:");
+                if (DrawFineSlider(Rectangle{(float)panelX + 70, (float)currentY, 170, 20}, NULL, TextFormat("%.3f", dbgPercentileShallow), &dbgPercentileShallow, 0.5f, 1.0f, 0.01f)) needsGravityMapUpdate = true;
+                currentY += 25;
+                
+                GuiLabel(Rectangle{(float)panelX, (float)currentY, 80, 20}, "Curve Pow:");
+                if (DrawFineSlider(Rectangle{(float)panelX + 70, (float)currentY, 170, 20}, NULL, TextFormat("%.2f", dbgContrastPower), &dbgContrastPower, 0.1f, 3.0f, 0.1f)) needsGravityMapUpdate = true;
+                currentY += 25;
+                
+                GuiLabel(Rectangle{(float)panelX, (float)currentY, 80, 20}, "Max Alpha:");
+                if (DrawFineSlider(Rectangle{(float)panelX + 70, (float)currentY, 170, 20}, NULL, TextFormat("%.0f", dbgMaxAlpha), &dbgMaxAlpha, 0.0f, 255.0f, 5.0f)) needsGravityMapUpdate = true;
+                currentY += 35;
+            }
+#endif
+            
             GuiLabel(Rectangle{(float)panelX, (float)currentY, 120, 20}, "Planet Count:");
             if (DrawFineSlider(Rectangle{(float)panelX + 100, (float)currentY, 140, 20}, NULL, TextFormat("%d", (int)numPlanetsFloat), &numPlanetsFloat, 1, 30, 1.0f)) {}
             currentY += 30;
@@ -345,6 +488,7 @@ int main(void)
             if (GuiButton(Rectangle{(float)panelX, (float)currentY, 260, 30}, "Generate Random Level")) {
                 level = Level((int)numPlanetsFloat, canvasWidth, canvasHeight);
                 needsTraceUpdate = true;
+                needsGravityMapUpdate = true;
                 playbackFrame = 0;
             }
             currentY += 50;

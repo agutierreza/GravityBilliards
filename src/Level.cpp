@@ -58,4 +58,27 @@ bool Level::isValidPlanetPosition(const Planet& newPlanet) const {
     return true;
 }
 
+Vector2D Level::getGravityForceAt(const Vector2D& pos) const {
+    Vector2D force{0.0, 0.0};
+    for (const auto& planet : planets) {
+        double dist = pos.distanceTo(planet.position);
+        if (dist > 0.0001) { // Prevent division by zero
+            double cubeDistance = dist * dist * dist;
+            force += (planet.position - pos) * (static_cast<double>(planet.mass) / cubeDistance);
+        }
+    }
+    return force;
+}
+
+double Level::getGravityPotentialAt(const Vector2D& pos) const {
+    double potential = 0.0;
+    for (const auto& planet : planets) {
+        double dist = pos.distanceTo(planet.position);
+        if (dist > 0.0001) {
+            potential -= static_cast<double>(planet.mass) / dist;
+        }
+    }
+    return potential;
+}
+
 } // namespace SpaceGolf

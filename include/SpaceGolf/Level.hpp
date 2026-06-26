@@ -65,6 +65,25 @@ public:
      * @return True if the position is safe and non-overlapping, False otherwise.
      */
     bool isValidPlanetPosition(const Planet& newPlanet) const;
+
+    /**
+     * @brief Calculates the total gravity force (acceleration) vector at a given position.
+     * 
+     * @param pos The position to calculate the force at.
+     * @return A Vector2D representing the net gravitational pull.
+     */
+    Vector2D getGravityForceAt(const Vector2D& pos) const;
+
+    /**
+     * @brief Calculates the gravitational potential at a given position.
+     * 
+     * This can be visualized as the depth of the "gravity well" on a 2D surface,
+     * where planets carve holes proportional to their mass and distance.
+     * 
+     * @param pos The position to calculate the potential at.
+     * @return The scalar gravitational potential.
+     */
+    double getGravityPotentialAt(const Vector2D& pos) const;
 };
 
 }
