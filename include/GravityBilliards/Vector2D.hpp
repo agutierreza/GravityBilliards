@@ -28,10 +28,39 @@ struct Vector2D {
     Vector2D(double x, double y) : x(x), y(y) {}
 
     // Operator Overloads
+    /**
+     * @brief Adds another vector to this one.
+     * @param other Vector to add.
+     * @return Resulting vector.
+     */
     Vector2D operator+(const Vector2D& other) const { return Vector2D(x + other.x, y + other.y); }
+
+    /**
+     * @brief Subtracts another vector from this one.
+     * @param other Vector to subtract.
+     * @return Resulting vector.
+     */
     Vector2D operator-(const Vector2D& other) const { return Vector2D(x - other.x, y - other.y); }
+
+    /**
+     * @brief Multiplies the vector by a scalar.
+     * @param scalar The multiplier.
+     * @return Resulting vector.
+     */
     Vector2D operator*(double scalar) const { return Vector2D(x * scalar, y * scalar); }
+
+    /**
+     * @brief Divides the vector by a scalar.
+     * @param scalar The divisor.
+     * @return Resulting vector.
+     */
     Vector2D operator/(double scalar) const { return Vector2D(x / scalar, y / scalar); }
+
+    /**
+     * @brief Adds another vector to this one in place.
+     * @param other Vector to add.
+     * @return Reference to this vector.
+     */
     Vector2D& operator+=(const Vector2D& other) { x += other.x; y += other.y; return *this; }
 
     /**

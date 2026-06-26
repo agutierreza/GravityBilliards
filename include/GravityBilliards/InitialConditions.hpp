@@ -12,10 +12,29 @@ namespace GravityBilliards {
  * integrator parameters, and initial particle state.
  */
 struct InitialConditions {
+    /**
+     * @brief The initial world layout and attractors.
+     */
     World world;
+
+    /**
+     * @brief The starting position of the particle.
+     */
     Vector2D particleStartPos;
+
+    /**
+     * @brief The starting velocity vector of the particle.
+     */
     Vector2D particleStartVel;
+
+    /**
+     * @brief The physical radius of the moving particle.
+     */
     double particleRadius = 6.0;
+
+    /**
+     * @brief The velocity threshold squared below which the particle is considered completely "stopped".
+     */
     double stopVelocityThreshold = 0.01;
 
     /**
