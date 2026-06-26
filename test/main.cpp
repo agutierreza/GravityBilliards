@@ -7,11 +7,11 @@
 #include <random>
 #include <optional>
 #include <nlohmann/json.hpp>
-#include "SpaceGolf/World.hpp"
-#include "SpaceGolf/EulerIntegrator.hpp"
-#include "SpaceGolf/InitialConditions.hpp"
+#include "GravityBilliards/World.hpp"
+#include "GravityBilliards/EulerIntegrator.hpp"
+#include "GravityBilliards/InitialConditions.hpp"
 
-using namespace SpaceGolf;
+using namespace GravityBilliards;
 
 // Simple argument parser helper
 std::vector<std::string> split(const std::string& s, char delimiter) {
@@ -25,8 +25,8 @@ std::vector<std::string> split(const std::string& s, char delimiter) {
 }
 
 void printHelp() {
-    std::cout << "SpaceGolfCLI Test Tool\n";
-    std::cout << "Usage: SpaceGolfCLI [options]\n";
+    std::cout << "GravityBilliardsCLI Test Tool\n";
+    std::cout << "Usage: GravityBilliardsCLI [options]\n";
     std::cout << "Options:\n";
     std::cout << "  --config <file.json>      Load initialConditions from a JSON export file\n";
     std::cout << "  --attractors-random <N>      Number of random attractors to generate (default: 10 if no fixed attractors)\n";

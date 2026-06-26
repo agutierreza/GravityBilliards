@@ -1,11 +1,11 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include "SpaceGolf/World.hpp"
-#include "SpaceGolf/Integrator.hpp"
-#include "SpaceGolf/Vector2D.hpp"
+#include "GravityBilliards/World.hpp"
+#include "GravityBilliards/Integrator.hpp"
+#include "GravityBilliards/Vector2D.hpp"
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 /**
  * @brief Represents a full set of initial conditions including the world layout, 
@@ -32,4 +32,4 @@ struct InitialConditions {
     nlohmann::json toJson() const;
 };
 
-} // namespace SpaceGolf
+} // namespace GravityBilliards

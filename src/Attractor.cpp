@@ -1,6 +1,6 @@
-#include "SpaceGolf/Attractor.hpp"
+#include "GravityBilliards/Attractor.hpp"
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 Attractor::Attractor() : mass(1), position({0.0, 0.0}) {
     calculateRadius();
@@ -18,4 +18,4 @@ void Attractor::calculateRadius() {
     radius = 4.0 * std::sqrt(static_cast<double>(mass));
 }
 
-} // namespace SpaceGolf
+} // namespace GravityBilliards

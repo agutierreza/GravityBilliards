@@ -1,6 +1,6 @@
-#include "SpaceGolf/InitialConditions.hpp"
+#include "GravityBilliards/InitialConditions.hpp"
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 InitialConditions InitialConditions::fromJson(const nlohmann::json& j) {
     InitialConditions s;
@@ -60,4 +60,4 @@ nlohmann::json InitialConditions::toJson() const {
     return j;
 }
 
-} // namespace SpaceGolf
+} // namespace GravityBilliards

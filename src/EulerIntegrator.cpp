@@ -1,7 +1,7 @@
-#include "SpaceGolf/EulerIntegrator.hpp"
+#include "GravityBilliards/EulerIntegrator.hpp"
 #include <cmath>
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 void EulerIntegrator::step(const World& world, Vector2D& pos, Vector2D& vel) const {
     Vector2D accel{0.0, 0.0};
@@ -123,4 +123,4 @@ std::vector<TracePoint> EulerIntegrator::getTrace(const World& world, Vector2D s
     return trace;
 }
 
-} // namespace SpaceGolf
+} // namespace GravityBilliards

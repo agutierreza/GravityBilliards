@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(SpaceGolfEngine CXX)
+project(GravityBilliardsEngine CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -7,14 +7,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 # Library
-add_library(SpaceGolfPhysics
+add_library(GravityBilliardsPhysics
     src/Attractor.cpp
     src/World.cpp
     src/EulerIntegrator.cpp
     src/InitialConditions.cpp
 )
 
-target_include_directories(SpaceGolfPhysics PUBLIC
+target_include_directories(GravityBilliardsPhysics PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
@@ -28,11 +28,11 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_GAMES OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(raylib)
 
-add_executable(SpaceGolfUI src/ui_main.cpp)
-target_link_libraries(SpaceGolfUI PRIVATE SpaceGolfPhysics raylib)
+add_executable(GravityBilliardsUI src/ui_main.cpp)
+target_link_libraries(GravityBilliardsUI PRIVATE GravityBilliardsPhysics raylib)
 # CLI Tool
-add_executable(SpaceGolfCLI test/main.cpp)
-target_link_libraries(SpaceGolfCLI PRIVATE SpaceGolfPhysics)
+add_executable(GravityBilliardsCLI test/main.cpp)
+target_link_libraries(GravityBilliardsCLI PRIVATE GravityBilliardsPhysics)
 
 
 find_package(Doxygen)
@@ -42,8 +42,8 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_GENERATE_HTML YES)
     set(DOXYGEN_GENERATE_LATEX NO)
     
-    doxygen_add_docs(SpaceGolfDocs
-        include/SpaceGolf
+    doxygen_add_docs(GravityBilliardsDocs
+        include/GravityBilliards
         src
         ALL
         COMMENT "Generating API documentation with Doxygen"

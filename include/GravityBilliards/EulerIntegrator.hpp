@@ -2,7 +2,7 @@
 
 #include "Integrator.hpp"
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 /**
  * @class EulerIntegrator

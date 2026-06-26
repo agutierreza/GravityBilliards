@@ -3,7 +3,7 @@
 #include <vector>
 #include "Attractor.hpp"
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 /**
  * @class World

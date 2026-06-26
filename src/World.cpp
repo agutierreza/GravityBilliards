@@ -1,7 +1,7 @@
-#include "SpaceGolf/World.hpp"
+#include "GravityBilliards/World.hpp"
 #include <random>
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 World::World(const std::vector<Attractor>& initialAttractors) : attractors(initialAttractors) {}
 
@@ -81,4 +81,4 @@ double World::getGravityPotentialAt(const Vector2D& pos) const {
     return potential;
 }
 
-} // namespace SpaceGolf
+} // namespace GravityBilliards

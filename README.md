@@ -2,17 +2,17 @@
 
 A high-performance C++ 2D physics engine designed specifically for calculating gravity, orbital trajectories, and inelastic collisions. 
 
-This engine is the modern C++ reincarnation of the [SpaceGolfSimulator](https://github.com/agutierreza/SpaceGolfSimulator) originally developed in 2013. The core physics logic has been completely extracted, refactored into a highly-modular architecture, and optimized with zero-allocation trace generation. It now serves as the foundational sandbox and engine for future N-body projects, orbital games, or synthwave physics experiments.
+This engine is the modern C++ reincarnation of the [GravityBilliardsSimulator](https://github.com/agutierreza/GravityBilliardsSimulator) originally developed in 2013. The core physics logic has been completely extracted, refactored into a highly-modular architecture, and optimized with zero-allocation trace generation. It now serves as the foundational sandbox and engine for future N-body projects, orbital games, or synthwave physics experiments.
 
 ## Project Structure
 
 The project builds three separate targets:
 
-1. **`SpaceGolfPhysics` (Static Library)**
+1. **`GravityBilliardsPhysics` (Static Library)**
    The headless core engine. It contains the pure math and logic for `Vector2D`, `Attractor`, `World`, and `Integrator`. You can link this library directly into your own video games or applications.
-2. **`SpaceGolfCLI` (Command Line Interface)**
+2. **`GravityBilliardsCLI` (Command Line Interface)**
    A terminal-based diagnostic tool. It loads JSON configurations to simulate physics initial conditions headless, generating automated SVGs and traces for regression testing.
-3. **`SpaceGolfUI` (Graphical Sandbox)**
+3. **`GravityBilliardsUI` (Graphical Sandbox)**
    An interactive Raylib visual debugger and playground. It provides a synthwave-themed UI to tweak vectors, masses, and thresholds in real-time, functioning primarily as a visual "scrubber" and testing tool for the core physics math.
 
 ## Building the Project
@@ -34,7 +34,7 @@ API documentation is automatically built using Doxygen.
 Ensure Doxygen is installed on your system and available in your PATH. CMake will automatically locate it and configure the documentation target.
 
 Once the build is complete, you can view the interactive HTML documentation by opening:
-`SpaceGolfEngine/docs/html/index.html`
+`GravityBilliardsEngine/docs/html/index.html`
 
 ## Running the UI Sandbox
 
@@ -42,7 +42,7 @@ Launch the UI executable to interact with the engine visually.
 
 ```bash
 cd build
-./SpaceGolfUI.exe
+./GravityBilliardsUI.exe
 ```
 
 ### UI Features:

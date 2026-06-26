@@ -4,7 +4,7 @@
 #include "Vector2D.hpp"
 #include <vector>
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 /**
  * @struct TracePoint
@@ -82,4 +82,4 @@ public:
     virtual std::vector<TracePoint> getTrace(const World& world, Vector2D startPos, Vector2D startVelocity, double startTime, double endTime) const = 0;
 };
 
-} // namespace SpaceGolf
+} // namespace GravityBilliards

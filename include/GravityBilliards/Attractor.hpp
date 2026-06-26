@@ -2,7 +2,7 @@
 
 #include "Vector2D.hpp"
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 /**
  * @struct Attractor

@@ -2,9 +2,9 @@
 #include "raymath.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
-#include "SpaceGolf/World.hpp"
-#include "SpaceGolf/EulerIntegrator.hpp"
-#include "SpaceGolf/InitialConditions.hpp"
+#include "GravityBilliards/World.hpp"
+#include "GravityBilliards/EulerIntegrator.hpp"
+#include "GravityBilliards/InitialConditions.hpp"
 #include <vector>
 #include <string>
 #include <fstream>
@@ -18,7 +18,7 @@
 
 #define ENABLE_GRAVITY_DEBUG_KNOBS 1
 
-using namespace SpaceGolf;
+using namespace GravityBilliards;
 
 // Helper to draw a slider with fine keyboard controls when hovering
 bool DrawFineSlider(Rectangle bounds, const char* textLeft, const char* textRight, float* value, float min, float max, float fineStep) {

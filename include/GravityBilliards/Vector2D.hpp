@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace SpaceGolf {
+namespace GravityBilliards {
 
 /**
  * @struct Vector2D
