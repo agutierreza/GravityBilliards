@@ -7,7 +7,7 @@ namespace SpaceGolf {
 
 /**
  * @class World
- * @brief Manages the collection of Attractors that make up a physics initialConditions.
+ * @brief Manages the collection of Attractors that make up a physics problem or environment.
  * 
  * The World is responsible for holding the world state (the attractors) and provides
  * robust utilities for procedurally generating valid, non-overlapping layouts.

@@ -9,7 +9,7 @@ namespace SpaceGolf {
  * @brief Represents a celestial body in the Space Golf universe.
  * 
  * Attractors exert gravitational pull on particles and act as solid collision bodies.
- * The radius of a attractor is dynamically calculated based on its mass to ensure
+ * The radius of an attractor is dynamically calculated based on its mass to ensure
  * a consistent 2D surface density across all objects.
  */
 struct Attractor {
@@ -18,25 +18,25 @@ struct Attractor {
     Vector2D position; ///< The center coordinates of the attractor in 2D space.
 
     /**
-     * @brief Default constructor. Creates a attractor with mass 1 at (0,0).
+     * @brief Default constructor. Creates an attractor with mass 1 at (0,0).
      */
     Attractor();
 
     /**
-     * @brief Constructs a attractor with a given mass at (0,0).
+     * @brief Constructs an attractor with a given mass at (0,0).
      * @param mass The mass of the attractor.
      */
     Attractor(int mass);
 
     /**
-     * @brief Constructs a attractor with a given integer mass and position.
+     * @brief Constructs an attractor with a given integer mass and position.
      * @param mass The mass of the attractor.
      * @param position The center position.
      */
     Attractor(int mass, Vector2D position);
 
     /**
-     * @brief Constructs a attractor with a precise double mass and position.
+     * @brief Constructs an attractor with a precise double mass and position.
      * @param m The mass of the attractor.
      * @param pos The center position.
      */
