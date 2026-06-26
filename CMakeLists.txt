@@ -11,6 +11,7 @@ add_library(GravityBilliardsPhysics
     src/Attractor.cpp
     src/World.cpp
     src/EulerIntegrator.cpp
+    src/PhysicsEngine.cpp
     src/InitialConditions.cpp
 )
 

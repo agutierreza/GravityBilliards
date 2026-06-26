@@ -9,6 +9,7 @@
 #include <nlohmann/json.hpp>
 #include "GravityBilliards/World.hpp"
 #include "GravityBilliards/EulerIntegrator.hpp"
+#include "GravityBilliards/PhysicsEngine.hpp"
 #include "GravityBilliards/InitialConditions.hpp"
 
 using namespace GravityBilliards;
@@ -139,7 +140,8 @@ int main(int argc, char* argv[]) {
     std::cout << "\nParticle Start Pos: (" << startPos->x << ", " << startPos->y << ")\n";
     std::cout << "Particle Start Vel: (" << startVel->x << ", " << startVel->y << ")\n";
 
-    EulerIntegrator sim;
+    auto integrator = std::make_shared<EulerIntegrator>();
+    PhysicsEngine sim(integrator);
     sim.stopVelocityThreshold = customStopThreshold.value_or(0.01);
     sim.dt = 1.0; 
 

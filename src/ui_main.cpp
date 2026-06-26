@@ -4,6 +4,7 @@
 #include "raygui.h"
 #include "GravityBilliards/World.hpp"
 #include "GravityBilliards/EulerIntegrator.hpp"
+#include "GravityBilliards/PhysicsEngine.hpp"
 #include "GravityBilliards/InitialConditions.hpp"
 #include <vector>
 #include <string>
@@ -57,7 +58,8 @@ int main(void)
     int canvasWidth = screenWidth - uiPanelWidth;
     
     World world(10, canvasWidth, screenHeight - 60); 
-    EulerIntegrator sim;
+    auto integrator = std::make_shared<EulerIntegrator>();
+    PhysicsEngine sim(integrator);
     sim.stopVelocityThreshold = 0.01;
     sim.dt = 1.0;
 
