@@ -3,7 +3,7 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 #include "SpaceGolf/World.hpp"
-#include "SpaceGolf/Integrator.hpp"
+#include "SpaceGolf/EulerIntegrator.hpp"
 #include "SpaceGolf/InitialConditions.hpp"
 #include <vector>
 #include <string>
@@ -57,7 +57,7 @@ int main(void)
     int canvasWidth = screenWidth - uiPanelWidth;
     
     World world(10, canvasWidth, screenHeight - 60); 
-    Integrator sim;
+    EulerIntegrator sim;
     sim.stopVelocityThreshold = 0.01;
     sim.dt = 1.0;
 

@@ -29,52 +29,26 @@ struct IntegratorResult {
 
 /**
  * @class Integrator
- * @brief The core physics engine.
+ * @brief The pure virtual interface for the core physics engine.
  * 
- * Handles all Euler integration, inverse-square gravity calculation, and inelastic collision logic.
- * It is completely stateless; you pass the world state into its functions, allowing you to 
- * run multiple integrators simultaneously without side effects.
+ * Defines the contract for integration logic. Implementations can use
+ * different algorithms (e.g., Euler, Runge-Kutta) to solve the motion.
  */
 class Integrator {
 public:
-    /**
-     * @brief The time step delta applied per frame of physics integration.
-     * Larger values calculate faster but reduce physics accuracy. (Default: 1.0)
-     */
-    double dt = 1.0;
-    
-    /**
-     * @brief The velocity threshold squared below which the particle is considered completely "stopped".
-     */
-    double stopVelocityThreshold = 0.05;
+    virtual ~Integrator() = default;
 
-    /**
-     * @brief The energy loss damping applied to velocity on every bounce.
-     */
-    double bounceDamping = 1.2;
-
-    /**
-     * @brief The physical radius of the moving particle. 
-     * Used exclusively to pad the collision boundary around attractors.
-     */
-    double particleRadius = 6.0;
-
-    Integrator() = default;
-    
     /**
      * @brief Performs a single integration step, handling gravity and collision.
-     * 
-     * Includes a restitution threshold to prevent micro-bouncing on low-velocity impacts.
      * 
      * @param world The attractor layout.
      * @param pos Current position (modified in place).
      * @param vel Current velocity (modified in place).
      */
-    void step(const World& world, Vector2D& pos, Vector2D& vel) const;
+    virtual void step(const World& world, Vector2D& pos, Vector2D& vel) const = 0;
 
     /**
      * @brief Simulates exactly `time` frames into the future and returns the end position.
-     * Useful for predicting where the ball will be at a specific moment without storing a trace.
      * 
      * @param world The attractor layout.
      * @param startPos Initial particle position.
@@ -82,26 +56,21 @@ public:
      * @param time The exact number of frames to integrate forward.
      * @return The predicted final Vector2D position.
      */
-    Vector2D predictPosition(const World& world, Vector2D startPos, Vector2D startVelocity, double time) const;
+    virtual Vector2D predictPosition(const World& world, Vector2D startPos, Vector2D startVelocity, double time) const = 0;
     
     /**
-     * @brief Integrates physics continuously until the particle's velocity remains below `stopVelocityThreshold` for 15 consecutive frames.
-     * 
-     * The 15-frame requirement prevents premature stops during bounce apexes where velocity momentarily drops near zero.
+     * @brief Integrates physics continuously until the particle's velocity remains below a threshold.
      * 
      * @param world The attractor layout.
      * @param startPos Initial particle position.
      * @param startVelocity Initial particle velocity.
-     * @param timeoutSeconds A fail-safe timeout in frames to prevent infinite loops if the particle escapes gravity.
+     * @param timeoutSeconds A fail-safe timeout in frames to prevent infinite loops.
      * @return An IntegratorResult struct containing the stopping data.
      */
-    IntegratorResult simulateUntilStop(const World& world, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const;
+    virtual IntegratorResult simulateUntilStop(const World& world, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const = 0;
     
     /**
      * @brief Extracts a dense timeline array of the particle's movement between two points in time.
-     * 
-     * This function pre-allocates memory and returns a fully populated vector of `TracePoint`s.
-     * It is heavily optimized for real-time visualization and playback.
      * 
      * @param world The attractor layout.
      * @param startPos Initial particle position.
@@ -110,7 +79,7 @@ public:
      * @param endTime The frame number to stop recording.
      * @return A chronological array of state snapshots.
      */
-    std::vector<TracePoint> getTrace(const World& world, Vector2D startPos, Vector2D startVelocity, double startTime, double endTime) const;
+    virtual std::vector<TracePoint> getTrace(const World& world, Vector2D startPos, Vector2D startVelocity, double startTime, double endTime) const = 0;
 };
 
-}
+} // namespace SpaceGolf

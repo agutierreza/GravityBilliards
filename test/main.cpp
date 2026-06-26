@@ -8,7 +8,7 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 #include "SpaceGolf/World.hpp"
-#include "SpaceGolf/Integrator.hpp"
+#include "SpaceGolf/EulerIntegrator.hpp"
 #include "SpaceGolf/InitialConditions.hpp"
 
 using namespace SpaceGolf;
@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
     std::cout << "\nParticle Start Pos: (" << startPos->x << ", " << startPos->y << ")\n";
     std::cout << "Particle Start Vel: (" << startVel->x << ", " << startVel->y << ")\n";
 
-    Integrator sim;
+    EulerIntegrator sim;
     sim.stopVelocityThreshold = customStopThreshold.value_or(0.01);
     sim.dt = 1.0; 
 
