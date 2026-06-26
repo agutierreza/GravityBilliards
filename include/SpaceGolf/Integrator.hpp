@@ -17,25 +17,25 @@ struct TracePoint {
 };
 
 /**
- * @struct SimulationResult
+ * @struct IntegratorResult
  * @brief Holds the final results of a `simulateUntilStop` execution.
  */
-struct SimulationResult {
-    Vector2D finalPosition; ///< The location of the particle when the simulation ended.
-    Vector2D finalVelocity; ///< The velocity of the particle when the simulation ended.
+struct IntegratorResult {
+    Vector2D finalPosition; ///< The location of the particle when the integrator ended.
+    Vector2D finalVelocity; ///< The velocity of the particle when the integrator ended.
     double timeElapsed;     ///< The total amount of time simulated in frames.
     bool stopped;           ///< True if the particle successfully stopped, False if it hit the timeout.
 };
 
 /**
- * @class Simulation
+ * @class Integrator
  * @brief The core physics engine.
  * 
  * Handles all Euler integration, inverse-square gravity calculation, and inelastic collision logic.
  * It is completely stateless; you pass the world state into its functions, allowing you to 
- * run multiple simulations simultaneously without side effects.
+ * run multiple integrators simultaneously without side effects.
  */
-class Simulation {
+class Integrator {
 public:
     /**
      * @brief The time step delta applied per frame of physics integration.
@@ -59,7 +59,7 @@ public:
      */
     double particleRadius = 6.0;
 
-    Simulation() = default;
+    Integrator() = default;
     
     /**
      * @brief Performs a single integration step, handling gravity and collision.
@@ -93,9 +93,9 @@ public:
      * @param startPos Initial particle position.
      * @param startVelocity Initial particle velocity.
      * @param timeoutSeconds A fail-safe timeout in frames to prevent infinite loops if the particle escapes gravity.
-     * @return A SimulationResult struct containing the stopping data.
+     * @return An IntegratorResult struct containing the stopping data.
      */
-    SimulationResult simulateUntilStop(const World& world, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const;
+    IntegratorResult simulateUntilStop(const World& world, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const;
     
     /**
      * @brief Extracts a dense timeline array of the particle's movement between two points in time.

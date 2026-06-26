@@ -8,7 +8,7 @@
 #include <optional>
 #include <nlohmann/json.hpp>
 #include "SpaceGolf/World.hpp"
-#include "SpaceGolf/Simulation.hpp"
+#include "SpaceGolf/Integrator.hpp"
 #include "SpaceGolf/InitialConditions.hpp"
 
 using namespace SpaceGolf;
@@ -34,7 +34,7 @@ void printHelp() {
     std::cout << "  --pos <x,y>               Starting position of the particle (default: random)\n";
     std::cout << "  --vel <x,y>               Starting velocity of the particle (default: random)\n";
     std::cout << "  --trace-time <start,end>  Time range for the trace (default: 100,1000)\n";
-    std::cout << "  --timeout <T>             Max simulation timeout in frames (default: 5000)\n";
+    std::cout << "  --timeout <T>             Max integrator timeout in frames (default: 5000)\n";
     std::cout << "  --help                    Show this message\n";
 }
 
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
                     startPos = s.particleStartPos;
                     startVel = s.particleStartVel;
                 }
-                if (j.contains("simulation") && j["simulation"].contains("stopVelocityThreshold")) {
+                if (j.contains("integrator") && j["integrator"].contains("stopVelocityThreshold")) {
                     customStopThreshold = s.stopVelocityThreshold;
                 }
             } catch (const std::exception& e) {
@@ -139,18 +139,18 @@ int main(int argc, char* argv[]) {
     std::cout << "\nParticle Start Pos: (" << startPos->x << ", " << startPos->y << ")\n";
     std::cout << "Particle Start Vel: (" << startVel->x << ", " << startVel->y << ")\n";
 
-    Simulation sim;
+    Integrator sim;
     sim.stopVelocityThreshold = customStopThreshold.value_or(0.01);
     sim.dt = 1.0; 
 
     // 1. Simulate until stop
     std::cout << "\nSimulating until stop (timeout " << timeout << " frames)...\n";
     auto start_sim = std::chrono::high_resolution_clock::now();
-    SimulationResult result = sim.simulateUntilStop(world, *startPos, *startVel, timeout);
+    IntegratorResult result = sim.simulateUntilStop(world, *startPos, *startVel, timeout);
     auto end_sim = std::chrono::high_resolution_clock::now();
     auto duration_sim = std::chrono::duration_cast<std::chrono::microseconds>(end_sim - start_sim).count();
     
-    std::cout << "Simulation complete in " << duration_sim << " microseconds (" 
+    std::cout << "Integrator complete in " << duration_sim << " microseconds (" 
               << (duration_sim / 1000.0) << " ms).\n";
     std::cout << "  Stopped? " << (result.stopped ? "Yes" : "No (Timeout)") << "\n";
     std::cout << "  Elapsed Time: " << result.timeElapsed << "\n";

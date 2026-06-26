@@ -9,7 +9,7 @@ This engine is the modern C++ reincarnation of the [SpaceGolfSimulator](https://
 The project builds three separate targets:
 
 1. **`SpaceGolfPhysics` (Static Library)**
-   The headless core engine. It contains the pure math and logic for `Vector2D`, `Attractor`, `World`, and `Simulation`. You can link this library directly into your own video games or applications.
+   The headless core engine. It contains the pure math and logic for `Vector2D`, `Attractor`, `World`, and `Integrator`. You can link this library directly into your own video games or applications.
 2. **`SpaceGolfCLI` (Command Line Interface)**
    A terminal-based diagnostic tool. It loads JSON configurations to simulate physics initial conditions headless, generating automated SVGs and traces for regression testing.
 3. **`SpaceGolfUI` (Graphical Sandbox)**
@@ -48,5 +48,5 @@ cd build
 ### UI Features:
 - **Timeline Scrubber**: Use the playback slider at the bottom of the screen to scrub back and forth through a particle's trajectory to visually debug collision and stop states.
 - **Drag-and-Drop JSON Import**: Drag any `.json` physics state file from your computer directly onto the window to instantly load those initial conditions.
-- **Diagnostics Export**: Click "Export Variables" to serialize the current simulation state into a JSON file in the `exports/` folder, which can be fed directly to the CLI runner.
+- **Diagnostics Export**: Click "Export Variables" to serialize the current integrator state into a JSON file in the `exports/` folder, which can be fed directly to the CLI runner.
 - **Dynamic Camera**: Right-click to pan around the scene, and use the mouse wheel to zoom in to micro-worlds. A minimap is provided in the bottom-right for navigation.

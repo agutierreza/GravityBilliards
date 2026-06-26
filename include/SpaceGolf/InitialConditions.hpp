@@ -2,14 +2,14 @@
 
 #include <nlohmann/json.hpp>
 #include "SpaceGolf/World.hpp"
-#include "SpaceGolf/Simulation.hpp"
+#include "SpaceGolf/Integrator.hpp"
 #include "SpaceGolf/Vector2D.hpp"
 
 namespace SpaceGolf {
 
 /**
  * @brief Represents a full set of initial conditions including the world layout, 
- * simulation parameters, and initial particle state.
+ * integrator parameters, and initial particle state.
  */
 struct InitialConditions {
     World world;

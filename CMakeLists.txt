@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(SpaceGolfPhysics
     src/Attractor.cpp
     src/World.cpp
-    src/Simulation.cpp
+    src/Integrator.cpp
     src/InitialConditions.cpp
 )
 

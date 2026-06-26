@@ -3,7 +3,7 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 #include "SpaceGolf/World.hpp"
-#include "SpaceGolf/Simulation.hpp"
+#include "SpaceGolf/Integrator.hpp"
 #include "SpaceGolf/InitialConditions.hpp"
 #include <vector>
 #include <string>
@@ -57,7 +57,7 @@ int main(void)
     int canvasWidth = screenWidth - uiPanelWidth;
     
     World world(10, canvasWidth, screenHeight - 60); 
-    Simulation sim;
+    Integrator sim;
     sim.stopVelocityThreshold = 0.01;
     sim.dt = 1.0;
 
@@ -368,7 +368,7 @@ int main(void)
             Vector2D particleVel(velX, velY);
             
             // 1. Query the engine for the true stop time 
-            SimulationResult result = sim.simulateUntilStop(world, particlePos, particleVel, 5000.0);
+            IntegratorResult result = sim.simulateUntilStop(world, particlePos, particleVel, 5000.0);
             
             // 2. Fetch the trace up to the timeout for visualization
             trace = sim.getTrace(world, particlePos, particleVel, 0.0, 5000.0);

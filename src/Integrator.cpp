@@ -1,9 +1,9 @@
-#include "SpaceGolf/Simulation.hpp"
+#include "SpaceGolf/Integrator.hpp"
 #include <cmath>
 
 namespace SpaceGolf {
 
-void Simulation::step(const World& world, Vector2D& pos, Vector2D& vel) const {
+void Integrator::step(const World& world, Vector2D& pos, Vector2D& vel) const {
     Vector2D accel{0.0, 0.0};
     bool collided = false;
     Vector2D collisionNormal{0.0, 0.0};
@@ -57,7 +57,7 @@ void Simulation::step(const World& world, Vector2D& pos, Vector2D& vel) const {
     }
 }
 
-Vector2D Simulation::predictPosition(const World& world, Vector2D startPos, Vector2D startVelocity, double time) const {
+Vector2D Integrator::predictPosition(const World& world, Vector2D startPos, Vector2D startVelocity, double time) const {
     Vector2D pos = startPos;
     Vector2D vel = startVelocity;
     
@@ -69,7 +69,7 @@ Vector2D Simulation::predictPosition(const World& world, Vector2D startPos, Vect
     return pos;
 }
 
-SimulationResult Simulation::simulateUntilStop(const World& world, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const {
+IntegratorResult Integrator::simulateUntilStop(const World& world, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const {
     Vector2D pos = startPos;
     Vector2D vel = startVelocity;
     
@@ -96,7 +96,7 @@ SimulationResult Simulation::simulateUntilStop(const World& world, Vector2D star
     return {pos, vel, elapsed, stopped};
 }
 
-std::vector<TracePoint> Simulation::getTrace(const World& world, Vector2D startPos, Vector2D startVelocity, double startTime, double endTime) const {
+std::vector<TracePoint> Integrator::getTrace(const World& world, Vector2D startPos, Vector2D startVelocity, double startTime, double endTime) const {
     std::vector<TracePoint> trace;
     
     if (endTime < startTime || startTime < 0.0) {
