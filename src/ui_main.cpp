@@ -2,9 +2,9 @@
 #include "raymath.h"
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
-#include "SpaceGolf/Level.hpp"
+#include "SpaceGolf/World.hpp"
 #include "SpaceGolf/Simulation.hpp"
-#include "SpaceGolf/Scenario.hpp"
+#include "SpaceGolf/InitialConditions.hpp"
 #include <vector>
 #include <string>
 #include <fstream>
@@ -41,7 +41,7 @@ bool DrawFineSlider(Rectangle bounds, const char* textLeft, const char* textRigh
     return changed;
 }
 
-enum class DragState { None, Particle, Planet, Minimap };
+enum class DragState { None, Particle, Attractor, Minimap };
 
 int main(void)
 {
@@ -56,7 +56,7 @@ int main(void)
     int uiPanelWidth = 350;
     int canvasWidth = screenWidth - uiPanelWidth;
     
-    Level level(10, canvasWidth, screenHeight - 60); 
+    World world(10, canvasWidth, screenHeight - 60); 
     Simulation sim;
     sim.stopVelocityThreshold = 0.01;
     sim.dt = 1.0;
@@ -78,8 +78,8 @@ int main(void)
     float playbackFrame = 0.0f;
     float playbackSpeed = 1.0f;
     
-    int numPlanets = 10;
-    float numPlanetsFloat = 10.0f;
+    int numAttractors = 10;
+    float numAttractorsFloat = 10.0f;
 
     std::vector<TracePoint> trace;
     bool needsTraceUpdate = true;
@@ -108,7 +108,7 @@ int main(void)
     Color neonCyan = {0, 255, 255, 255};      
     Color neonGreen = {57, 255, 20, 255};     
     Color neonYellow = {255, 255, 0, 255};    
-    Color planetFill = {20, 0, 50, 255};
+    Color attractorFill = {20, 0, 50, 255};
     Color uiBg = {20, 0, 40, 255};
     Color gridLine = {255, 0, 255, 40};
 
@@ -132,7 +132,7 @@ int main(void)
     camera.zoom = 1.0f;
 
     DragState dragState = DragState::None;
-    int draggedPlanetIndex = -1;
+    int draggedAttractorIndex = -1;
 
     while (!WindowShouldClose())
     {
@@ -171,10 +171,10 @@ int main(void)
                         nlohmann::json j;
                         f >> j;
                         
-                        Scenario s = Scenario::fromJson(j);
-                        if (!s.level.planets.empty()) {
-                            level.planets = s.level.planets;
-                            numPlanetsFloat = (float)level.planets.size();
+                        InitialConditions s = InitialConditions::fromJson(j);
+                        if (!s.world.attractors.empty()) {
+                            world.attractors = s.world.attractors;
+                            numAttractorsFloat = (float)world.attractors.size();
                         }
                         
                         startX = s.particleStartPos.x;
@@ -212,12 +212,12 @@ int main(void)
                 if (CheckCollisionPointCircle(worldMouse, {startX, startY}, particleRadiusFloat + 10.0f)) { // slightly larger hitbox
                     dragState = DragState::Particle;
                 } else {
-                    // Check planets
-                    for(int i = 0; i < level.planets.size(); ++i) {
-                        Vector2 pPos = {(float)level.planets[i].position.x, (float)level.planets[i].position.y};
-                        if (CheckCollisionPointCircle(worldMouse, pPos, level.planets[i].radius)) {
-                            dragState = DragState::Planet;
-                            draggedPlanetIndex = i;
+                    // Check attractors
+                    for(int i = 0; i < world.attractors.size(); ++i) {
+                        Vector2 pPos = {(float)world.attractors[i].position.x, (float)world.attractors[i].position.y};
+                        if (CheckCollisionPointCircle(worldMouse, pPos, world.attractors[i].radius)) {
+                            dragState = DragState::Attractor;
+                            draggedAttractorIndex = i;
                             break;
                         }
                     }
@@ -227,11 +227,11 @@ int main(void)
         
         if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT)) {
             dragState = DragState::None;
-            draggedPlanetIndex = -1;
+            draggedAttractorIndex = -1;
         }
 
         // Drag execution
-        if (dragState == DragState::Particle || dragState == DragState::Planet) {
+        if (dragState == DragState::Particle || dragState == DragState::Attractor) {
             Vector2 clampedMouse = mousePos;
             if (clampedMouse.x < 0) clampedMouse.x = 0;
             if (clampedMouse.x > canvasWidth) clampedMouse.x = canvasWidth;
@@ -242,8 +242,8 @@ int main(void)
             if (dragState == DragState::Particle) {
                 startX = clampedWorldMouse.x;
                 startY = clampedWorldMouse.y;
-            } else if (draggedPlanetIndex != -1) {
-                level.planets[draggedPlanetIndex].position = {clampedWorldMouse.x, clampedWorldMouse.y};
+            } else if (draggedAttractorIndex != -1) {
+                world.attractors[draggedAttractorIndex].position = {clampedWorldMouse.x, clampedWorldMouse.y};
                 needsGravityMapUpdate = true;
             }
             needsTraceUpdate = true;
@@ -299,7 +299,7 @@ int main(void)
                 float worldY = topLeft.y + y * stepY;
                 for (int x = 0; x < mapResX; ++x) {
                     float worldX = topLeft.x + x * stepX;
-                    potentials[y * mapResX + x] = level.getGravityPotentialAt(Vector2D(worldX, worldY));
+                    potentials[y * mapResX + x] = world.getGravityPotentialAt(Vector2D(worldX, worldY));
                 }
             }
             
@@ -368,10 +368,10 @@ int main(void)
             Vector2D particleVel(velX, velY);
             
             // 1. Query the engine for the true stop time 
-            SimulationResult result = sim.simulateUntilStop(level, particlePos, particleVel, 5000.0);
+            SimulationResult result = sim.simulateUntilStop(world, particlePos, particleVel, 5000.0);
             
             // 2. Fetch the trace up to the timeout for visualization
-            trace = sim.getTrace(level, particlePos, particleVel, 0.0, 5000.0);
+            trace = sim.getTrace(world, particlePos, particleVel, 0.0, 5000.0);
             
             // 3. Mark the stop frame natively from the engine's result
             stopFrameIdx = -1;
@@ -410,8 +410,8 @@ int main(void)
                 DrawLine(-10000, 0, 10000, 0, gridLine);
                 DrawLine(0, -10000, 0, 10000, gridLine);
 
-                for (const auto& p : level.planets) {
-                    DrawCircle(p.position.x, p.position.y, p.radius, planetFill); 
+                for (const auto& p : world.attractors) {
+                    DrawCircle(p.position.x, p.position.y, p.radius, attractorFill); 
                     DrawCircleLines(p.position.x, p.position.y, p.radius, neonCyan); 
                 }
 
@@ -481,12 +481,12 @@ int main(void)
             }
 #endif
             
-            GuiLabel(Rectangle{(float)panelX, (float)currentY, 120, 20}, "Planet Count:");
-            if (DrawFineSlider(Rectangle{(float)panelX + 100, (float)currentY, 140, 20}, NULL, TextFormat("%d", (int)numPlanetsFloat), &numPlanetsFloat, 1, 30, 1.0f)) {}
+            GuiLabel(Rectangle{(float)panelX, (float)currentY, 120, 20}, "Attractor Count:");
+            if (DrawFineSlider(Rectangle{(float)panelX + 100, (float)currentY, 140, 20}, NULL, TextFormat("%d", (int)numAttractorsFloat), &numAttractorsFloat, 1, 30, 1.0f)) {}
             currentY += 30;
             
-            if (GuiButton(Rectangle{(float)panelX, (float)currentY, 260, 30}, "Generate Random Level")) {
-                level = Level((int)numPlanetsFloat, canvasWidth, canvasHeight);
+            if (GuiButton(Rectangle{(float)panelX, (float)currentY, 260, 30}, "Generate Random World")) {
+                world = World((int)numAttractorsFloat, canvasWidth, canvasHeight);
                 needsTraceUpdate = true;
                 needsGravityMapUpdate = true;
                 playbackFrame = 0;
@@ -540,8 +540,8 @@ int main(void)
             DrawRectangleRec(minimapRect, {15, 0, 30, 255});
             DrawRectangleLinesEx(minimapRect, 1, neonPink);
 
-            // Draw planets on minimap
-            for (const auto& p : level.planets) {
+            // Draw attractors on minimap
+            for (const auto& p : world.attractors) {
                 float mx = minimapRect.x + ((p.position.x - mapWorldOffsetX) / mapWorldWidth) * minimapRect.width;
                 float my = minimapRect.y + ((p.position.y - mapWorldOffsetY) / mapWorldHeight) * minimapRect.height;
                 float mr = (p.radius / mapWorldWidth) * minimapRect.width;
@@ -582,8 +582,8 @@ int main(void)
                 ssFilename << "export_" << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M%S") << ".json";
                 std::string filename = (exportDir / ssFilename.str()).string();
                 
-                Scenario s;
-                s.level = level;
+                InitialConditions s;
+                s.world = world;
                 s.particleStartPos = {startX, startY};
                 s.particleStartVel = {velX, velY};
                 s.particleRadius = particleRadiusFloat;

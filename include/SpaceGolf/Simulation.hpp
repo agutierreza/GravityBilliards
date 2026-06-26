@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Level.hpp"
+#include "World.hpp"
 #include "Vector2D.hpp"
 #include <vector>
 
@@ -55,7 +55,7 @@ public:
 
     /**
      * @brief The physical radius of the moving particle. 
-     * Used exclusively to pad the collision boundary around planets.
+     * Used exclusively to pad the collision boundary around attractors.
      */
     double particleRadius = 6.0;
 
@@ -66,36 +66,36 @@ public:
      * 
      * Includes a restitution threshold to prevent micro-bouncing on low-velocity impacts.
      * 
-     * @param level The planet layout.
+     * @param world The attractor layout.
      * @param pos Current position (modified in place).
      * @param vel Current velocity (modified in place).
      */
-    void step(const Level& level, Vector2D& pos, Vector2D& vel) const;
+    void step(const World& world, Vector2D& pos, Vector2D& vel) const;
 
     /**
      * @brief Simulates exactly `time` frames into the future and returns the end position.
      * Useful for predicting where the ball will be at a specific moment without storing a trace.
      * 
-     * @param level The planet layout.
+     * @param world The attractor layout.
      * @param startPos Initial particle position.
      * @param startVelocity Initial particle velocity.
      * @param time The exact number of frames to integrate forward.
      * @return The predicted final Vector2D position.
      */
-    Vector2D predictPosition(const Level& level, Vector2D startPos, Vector2D startVelocity, double time) const;
+    Vector2D predictPosition(const World& world, Vector2D startPos, Vector2D startVelocity, double time) const;
     
     /**
      * @brief Integrates physics continuously until the particle's velocity remains below `stopVelocityThreshold` for 15 consecutive frames.
      * 
      * The 15-frame requirement prevents premature stops during bounce apexes where velocity momentarily drops near zero.
      * 
-     * @param level The planet layout.
+     * @param world The attractor layout.
      * @param startPos Initial particle position.
      * @param startVelocity Initial particle velocity.
      * @param timeoutSeconds A fail-safe timeout in frames to prevent infinite loops if the particle escapes gravity.
      * @return A SimulationResult struct containing the stopping data.
      */
-    SimulationResult simulateUntilStop(const Level& level, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const;
+    SimulationResult simulateUntilStop(const World& world, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const;
     
     /**
      * @brief Extracts a dense timeline array of the particle's movement between two points in time.
@@ -103,14 +103,14 @@ public:
      * This function pre-allocates memory and returns a fully populated vector of `TracePoint`s.
      * It is heavily optimized for real-time visualization and playback.
      * 
-     * @param level The planet layout.
+     * @param world The attractor layout.
      * @param startPos Initial particle position.
      * @param startVelocity Initial particle velocity.
      * @param startTime The frame number to start recording.
      * @param endTime The frame number to stop recording.
      * @return A chronological array of state snapshots.
      */
-    std::vector<TracePoint> getTrace(const Level& level, Vector2D startPos, Vector2D startVelocity, double startTime, double endTime) const;
+    std::vector<TracePoint> getTrace(const World& world, Vector2D startPos, Vector2D startVelocity, double startTime, double endTime) const;
 };
 
 }

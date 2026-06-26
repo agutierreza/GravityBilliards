@@ -7,9 +7,9 @@
 #include <random>
 #include <optional>
 #include <nlohmann/json.hpp>
-#include "SpaceGolf/Level.hpp"
+#include "SpaceGolf/World.hpp"
 #include "SpaceGolf/Simulation.hpp"
-#include "SpaceGolf/Scenario.hpp"
+#include "SpaceGolf/InitialConditions.hpp"
 
 using namespace SpaceGolf;
 
@@ -28,9 +28,9 @@ void printHelp() {
     std::cout << "SpaceGolfCLI Test Tool\n";
     std::cout << "Usage: SpaceGolfCLI [options]\n";
     std::cout << "Options:\n";
-    std::cout << "  --config <file.json>      Load scenario from a JSON export file\n";
-    std::cout << "  --planets-random <N>      Number of random planets to generate (default: 10 if no fixed planets)\n";
-    std::cout << "  --planet <x,y,mass>       Add a fixed planet. Can be used multiple times.\n";
+    std::cout << "  --config <file.json>      Load initialConditions from a JSON export file\n";
+    std::cout << "  --attractors-random <N>      Number of random attractors to generate (default: 10 if no fixed attractors)\n";
+    std::cout << "  --attractor <x,y,mass>       Add a fixed attractor. Can be used multiple times.\n";
     std::cout << "  --pos <x,y>               Starting position of the particle (default: random)\n";
     std::cout << "  --vel <x,y>               Starting velocity of the particle (default: random)\n";
     std::cout << "  --trace-time <start,end>  Time range for the trace (default: 100,1000)\n";
@@ -39,8 +39,8 @@ void printHelp() {
 }
 
 int main(int argc, char* argv[]) {
-    std::vector<Planet> fixedPlanets;
-    std::optional<int> randomPlanetsOpt;
+    std::vector<Attractor> fixedAttractors;
+    std::optional<int> randomAttractorsOpt;
     std::optional<Vector2D> startPos;
     std::optional<Vector2D> startVel;
     std::optional<double> customStopThreshold;
@@ -65,9 +65,9 @@ int main(int argc, char* argv[]) {
             nlohmann::json j;
             try {
                 f >> j;
-                Scenario s = Scenario::fromJson(j);
-                if (!s.level.planets.empty()) {
-                    fixedPlanets = s.level.planets;
+                InitialConditions s = InitialConditions::fromJson(j);
+                if (!s.world.attractors.empty()) {
+                    fixedAttractors = s.world.attractors;
                 }
                 if (j.contains("particle")) {
                     startPos = s.particleStartPos;
@@ -80,12 +80,12 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Failed to parse JSON config: " << e.what() << "\n";
                 return 1;
             }
-        } else if (arg == "--planets-random" && i + 1 < argc) {
-            randomPlanetsOpt = std::stoi(argv[++i]);
-        } else if (arg == "--planet" && i + 1 < argc) {
+        } else if (arg == "--attractors-random" && i + 1 < argc) {
+            randomAttractorsOpt = std::stoi(argv[++i]);
+        } else if (arg == "--attractor" && i + 1 < argc) {
             auto parts = split(argv[++i], ',');
             if (parts.size() == 3) {
-                fixedPlanets.emplace_back(std::stoi(parts[2]), Vector2D(std::stod(parts[0]), std::stod(parts[1])));
+                fixedAttractors.emplace_back(std::stoi(parts[2]), Vector2D(std::stod(parts[0]), std::stod(parts[1])));
             }
         } else if (arg == "--pos" && i + 1 < argc) {
             auto parts = split(argv[++i], ',');
@@ -107,11 +107,11 @@ int main(int argc, char* argv[]) {
     std::random_device rd;
     std::mt19937 gen(rd());
 
-    Level level(fixedPlanets);
-    int numRandomPlanets = randomPlanetsOpt.value_or(fixedPlanets.empty() ? 10 : 0);
+    World world(fixedAttractors);
+    int numRandomAttractors = randomAttractorsOpt.value_or(fixedAttractors.empty() ? 10 : 0);
 
-    if (numRandomPlanets > 0) {
-        level.addRandomPlanets(numRandomPlanets, width, height);
+    if (numRandomAttractors > 0) {
+        world.addRandomAttractors(numRandomAttractors, width, height);
     }
 
     if (!startPos) {
@@ -126,12 +126,12 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "--- Space Golf Physics Engine CLI ---\n\n";
-    std::cout << "Level contains " << level.planets.size() << " planets (" 
-              << fixedPlanets.size() << " fixed, " << (level.planets.size() - fixedPlanets.size()) << " random).\n";
+    std::cout << "World contains " << world.attractors.size() << " attractors (" 
+              << fixedAttractors.size() << " fixed, " << (world.attractors.size() - fixedAttractors.size()) << " random).\n";
               
-    for (size_t i = 0; i < level.planets.size(); ++i) {
-        const auto& p = level.planets[i];
-        std::cout << "  Planet " << i << ": Mass=" << p.mass 
+    for (size_t i = 0; i < world.attractors.size(); ++i) {
+        const auto& p = world.attractors[i];
+        std::cout << "  Attractor " << i << ": Mass=" << p.mass 
                   << ", Radius=" << p.radius 
                   << ", Pos=(" << p.position.x << ", " << p.position.y << ")\n";
     }
@@ -146,7 +146,7 @@ int main(int argc, char* argv[]) {
     // 1. Simulate until stop
     std::cout << "\nSimulating until stop (timeout " << timeout << " frames)...\n";
     auto start_sim = std::chrono::high_resolution_clock::now();
-    SimulationResult result = sim.simulateUntilStop(level, *startPos, *startVel, timeout);
+    SimulationResult result = sim.simulateUntilStop(world, *startPos, *startVel, timeout);
     auto end_sim = std::chrono::high_resolution_clock::now();
     auto duration_sim = std::chrono::duration_cast<std::chrono::microseconds>(end_sim - start_sim).count();
     
@@ -160,7 +160,7 @@ int main(int argc, char* argv[]) {
     // 2. Get Trace
     std::cout << "\nGenerating fast trace for time " << traceStart << " to " << traceEnd << "...\n";
     auto start_trace = std::chrono::high_resolution_clock::now();
-    std::vector<TracePoint> trace = sim.getTrace(level, *startPos, *startVel, traceStart, traceEnd);
+    std::vector<TracePoint> trace = sim.getTrace(world, *startPos, *startVel, traceStart, traceEnd);
     auto end_trace = std::chrono::high_resolution_clock::now();
     auto duration_trace = std::chrono::duration_cast<std::chrono::microseconds>(end_trace - start_trace).count();
     
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
     if (svg.is_open()) {
         svg << "<svg width=\"1920\" height=\"1080\" xmlns=\"http://www.w3.org/2000/svg\">\n";
         svg << "<rect width=\"100%\" height=\"100%\" fill=\"#1a1a2e\"/>\n";
-        for (const auto& p : level.planets) {
+        for (const auto& p : world.attractors) {
             svg << "<circle cx=\"" << p.position.x << "\" cy=\"" << p.position.y 
                 << "\" r=\"" << p.radius << "\" fill=\"#16213e\" stroke=\"#0f3460\" stroke-width=\"2\"/>\n";
         }

@@ -1,19 +1,19 @@
-#include "SpaceGolf/Scenario.hpp"
+#include "SpaceGolf/InitialConditions.hpp"
 
 namespace SpaceGolf {
 
-Scenario Scenario::fromJson(const nlohmann::json& j) {
-    Scenario s;
-    if (j.contains("planets")) {
-        for (const auto& p : j["planets"]) {
-            Planet planet(
+InitialConditions InitialConditions::fromJson(const nlohmann::json& j) {
+    InitialConditions s;
+    if (j.contains("attractors")) {
+        for (const auto& p : j["attractors"]) {
+            Attractor attractor(
                 p["mass"].get<int>(), 
                 Vector2D(p["position"]["x"].get<double>(), p["position"]["y"].get<double>())
             );
             if (p.contains("radius")) {
-                planet.radius = p["radius"].get<double>();
+                attractor.radius = p["radius"].get<double>();
             }
-            s.level.planets.push_back(planet);
+            s.world.attractors.push_back(attractor);
         }
     }
     
@@ -39,7 +39,7 @@ Scenario Scenario::fromJson(const nlohmann::json& j) {
     return s;
 }
 
-nlohmann::json Scenario::toJson() const {
+nlohmann::json InitialConditions::toJson() const {
     nlohmann::json j;
     
     j["simulation"]["stopVelocityThreshold"] = stopVelocityThreshold;
@@ -48,9 +48,9 @@ nlohmann::json Scenario::toJson() const {
     j["particle"]["startPosition"] = {{"x", particleStartPos.x}, {"y", particleStartPos.y}};
     j["particle"]["startVelocity"] = {{"x", particleStartVel.x}, {"y", particleStartVel.y}};
     
-    j["planets"] = nlohmann::json::array();
-    for (const auto& p : level.planets) {
-        j["planets"].push_back({
+    j["attractors"] = nlohmann::json::array();
+    for (const auto& p : world.attractors) {
+        j["attractors"].push_back({
             {"position", {{"x", p.position.x}, {"y", p.position.y}}},
             {"mass", p.mass},
             {"radius", p.radius}

@@ -1,15 +1,15 @@
-#include "SpaceGolf/Level.hpp"
+#include "SpaceGolf/World.hpp"
 #include <random>
 
 namespace SpaceGolf {
 
-Level::Level(const std::vector<Planet>& initialPlanets) : planets(initialPlanets) {}
+World::World(const std::vector<Attractor>& initialAttractors) : attractors(initialAttractors) {}
 
-Level::Level(int numPlanets, double width, double height) {
-    addRandomPlanets(numPlanets, width, height);
+World::World(int numAttractors, double width, double height) {
+    addRandomAttractors(numAttractors, width, height);
 }
 
-void Level::addRandomPlanets(int numPlanets, double width, double height) {
+void World::addRandomAttractors(int numAttractors, double width, double height) {
     std::random_device rd;
     std::mt19937 gen(rd());
     
@@ -21,10 +21,10 @@ void Level::addRandomPlanets(int numPlanets, double width, double height) {
 
     int maxAttempts = 1000;
     
-    for (int i = 0; i < numPlanets; ++i) {
+    for (int i = 0; i < numAttractors; ++i) {
         bool placed = false;
         for (int attempt = 0; attempt < maxAttempts; ++attempt) {
-            Planet p(massDist(gen), {xDist(gen), yDist(gen)});
+            Attractor p(massDist(gen), {xDist(gen), yDist(gen)});
             
             // Need to make sure they are fully inside the bounds as well (optional but good)
             if (p.position.x - p.radius < 0 || p.position.x + p.radius > width ||
@@ -32,50 +32,50 @@ void Level::addRandomPlanets(int numPlanets, double width, double height) {
                 continue;
             }
 
-            if (isValidPlanetPosition(p)) {
-                planets.push_back(p);
+            if (isValidAttractorPosition(p)) {
+                attractors.push_back(p);
                 placed = true;
                 break;
             }
         }
         
         // If we fail after maxAttempts, it's likely too crowded. 
-        // For this assignment we just stop adding or continue with fewer planets.
+        // For this assignment we just stop adding or continue with fewer attractors.
         if (!placed) {
             break;
         }
     }
 }
 
-bool Level::isValidPlanetPosition(const Planet& newPlanet) const {
-    for (const auto& p : planets) {
-        double dist = p.position.distanceTo(newPlanet.position);
+bool World::isValidAttractorPosition(const Attractor& newAttractor) const {
+    for (const auto& p : attractors) {
+        double dist = p.position.distanceTo(newAttractor.position);
         // Add a tiny buffer to avoid edge cases where they touch perfectly
-        if (dist <= (p.radius + newPlanet.radius + 1.0)) {
+        if (dist <= (p.radius + newAttractor.radius + 1.0)) {
             return false;
         }
     }
     return true;
 }
 
-Vector2D Level::getGravityForceAt(const Vector2D& pos) const {
+Vector2D World::getGravityForceAt(const Vector2D& pos) const {
     Vector2D force{0.0, 0.0};
-    for (const auto& planet : planets) {
-        double dist = pos.distanceTo(planet.position);
+    for (const auto& attractor : attractors) {
+        double dist = pos.distanceTo(attractor.position);
         if (dist > 0.0001) { // Prevent division by zero
             double cubeDistance = dist * dist * dist;
-            force += (planet.position - pos) * (static_cast<double>(planet.mass) / cubeDistance);
+            force += (attractor.position - pos) * (static_cast<double>(attractor.mass) / cubeDistance);
         }
     }
     return force;
 }
 
-double Level::getGravityPotentialAt(const Vector2D& pos) const {
+double World::getGravityPotentialAt(const Vector2D& pos) const {
     double potential = 0.0;
-    for (const auto& planet : planets) {
-        double dist = pos.distanceTo(planet.position);
+    for (const auto& attractor : attractors) {
+        double dist = pos.distanceTo(attractor.position);
         if (dist > 0.0001) {
-            potential -= static_cast<double>(planet.mass) / dist;
+            potential -= static_cast<double>(attractor.mass) / dist;
         }
     }
     return potential;
