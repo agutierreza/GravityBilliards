@@ -14,6 +14,7 @@ add_library(GravityBilliardsPhysics
     src/CircleCollisionDetector.cpp
     src/InelasticCollisionResolver.cpp
     src/InitialConditions.cpp
+    src/EnergyDiagnostics.cpp
 )
 
 target_include_directories(GravityBilliardsPhysics PUBLIC

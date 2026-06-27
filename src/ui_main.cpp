@@ -9,6 +9,7 @@
 #include "GravityBilliards/CircleCollisionDetector.hpp"
 #include "GravityBilliards/InelasticCollisionResolver.hpp"
 #include "GravityBilliards/InitialConditions.hpp"
+#include "GravityBilliards/EnergyDiagnostics.hpp"
 #include <vector>
 #include <string>
 #include <fstream>
@@ -49,8 +50,8 @@ enum class DragState { None, Particle, Attractor, Minimap };
 
 int main(void)
 {
-    const int screenWidth = 1280;
-    const int screenHeight = 720;
+    const int screenWidth = 1600;
+    const int screenHeight = 900;
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(screenWidth, screenHeight, "Space Golf Physics UI & Replay System");
@@ -99,6 +100,10 @@ int main(void)
     
     std::string exportMessage = "";
     float exportMessageTimer = 0.0f;
+
+    bool showEnergyGraph = false;
+    bool needsEnergyUpdate = false;
+    EnergyTimeline energyTimeline;
 
     bool showGravityMap = false;
     bool needsGravityMapUpdate = true;
@@ -392,6 +397,12 @@ int main(void)
             }
             
             needsTraceUpdate = false;
+            needsEnergyUpdate = true;
+        }
+
+        if (showEnergyGraph && needsEnergyUpdate && !trace.empty()) {
+            energyTimeline = EnergyDiagnostics::analyse(trace, world);
+            needsEnergyUpdate = false;
         }
 
         if (isPlaying && !trace.empty()) {
@@ -408,53 +419,137 @@ int main(void)
         BeginDrawing();
             ClearBackground(bgDark); 
 
-            if (showGravityMap) {
-                DrawTexturePro(gravityTexture, 
-                               {0, 0, (float)mapResX, (float)mapResY}, 
-                               {0, 0, (float)canvasWidth, (float)canvasHeight}, 
-                               {0, 0}, 0.0f, WHITE);
-            }
-
-            // --- DRAW CANVAS (Camera View) ---
-            BeginMode2D(camera);
-                
-                // Draw origin axes lightly
-                DrawLine(-10000, 0, 10000, 0, gridLine);
-                DrawLine(0, -10000, 0, 10000, gridLine);
-
-                for (const auto& p : world.attractors) {
-                    DrawCircle(p.position.x, p.position.y, p.radius, attractorFill); 
-                    DrawCircleLines(p.position.x, p.position.y, p.radius, neonCyan); 
+            if (!showEnergyGraph) {
+                if (showGravityMap) {
+                    DrawTexturePro(gravityTexture, 
+                                   {0, 0, (float)mapResX, (float)mapResY}, 
+                                   {0, 0, (float)canvasWidth, (float)canvasHeight}, 
+                                   {0, 0}, 0.0f, WHITE);
                 }
 
-                if (trace.size() > 1) {
-                    for (size_t i = 0; i < trace.size() - 1; ++i) {
-                        Vector2 start = {(float)trace[i].position.x, (float)trace[i].position.y};
-                        Vector2 end = {(float)trace[i+1].position.x, (float)trace[i+1].position.y};
-                        DrawLineEx(start, end, 1.5f, {255, 0, 127, 200}); 
-                    }
-                }
-
-                // Draw moving particle / start particle
-                DrawCircle(startX, startY, particleRadiusFloat, {255, 255, 0, 100}); // Ghost start
-                if (!trace.empty()) {
-                    int frameIdx = (int)playbackFrame;
-                    if (frameIdx >= trace.size()) frameIdx = trace.size() - 1;
+                // --- DRAW CANVAS (Camera View) ---
+                BeginMode2D(camera);
                     
-                    Vector2D currentPos = trace[frameIdx].position;
-                    DrawCircle(currentPos.x, currentPos.y, particleRadiusFloat, neonGreen); 
-                }
+                    // Draw origin axes lightly
+                    DrawLine(-10000, 0, 10000, 0, gridLine);
+                    DrawLine(0, -10000, 0, 10000, gridLine);
 
-                // Draw initial velocity vector
-                DrawLineEx({startX, startY}, {startX + velX*5.0f, startY + velY*5.0f}, 2.0f, neonYellow);
+                    for (const auto& p : world.attractors) {
+                        DrawCircle(p.position.x, p.position.y, p.radius, attractorFill); 
+                        DrawCircleLines(p.position.x, p.position.y, p.radius, neonCyan); 
+                    }
 
-                // Draw Stop Marker
-                if (stopFrameIdx != -1) {
-                    Vector2D stopPos = trace[stopFrameIdx].position;
-                    DrawCircleLines(stopPos.x, stopPos.y, 15.0f, neonYellow);
-                    DrawText(TextFormat("Stop Frame: %d", stopFrameIdx), stopPos.x + 20, stopPos.y - 10, 10, neonYellow);
+                    if (trace.size() > 1) {
+                        for (size_t i = 0; i < trace.size() - 1; ++i) {
+                            Vector2 start = {(float)trace[i].position.x, (float)trace[i].position.y};
+                            Vector2 end = {(float)trace[i+1].position.x, (float)trace[i+1].position.y};
+                            DrawLineEx(start, end, 1.5f, {255, 0, 127, 200}); 
+                        }
+                    }
+
+                    // Draw moving particle / start particle
+                    DrawCircle(startX, startY, particleRadiusFloat, {255, 255, 0, 100}); // Ghost start
+                    if (!trace.empty()) {
+                        int frameIdx = (int)playbackFrame;
+                        if (frameIdx >= trace.size()) frameIdx = trace.size() - 1;
+                        
+                        Vector2D currentPos = trace[frameIdx].position;
+                        DrawCircle(currentPos.x, currentPos.y, particleRadiusFloat, neonGreen); 
+                    }
+
+                    // Draw initial velocity vector
+                    DrawLineEx({startX, startY}, {startX + velX*5.0f, startY + velY*5.0f}, 2.0f, neonYellow);
+
+                    // Draw Stop Marker
+                    if (stopFrameIdx != -1) {
+                        Vector2D stopPos = trace[stopFrameIdx].position;
+                        DrawCircleLines(stopPos.x, stopPos.y, 15.0f, neonYellow);
+                        DrawText(TextFormat("Stop Frame: %d", stopFrameIdx), stopPos.x + 20, stopPos.y - 10, 10, neonYellow);
+                    }
+                EndMode2D();
+            } else {
+                // --- DRAW ENERGY GRAPH ---
+                if (!energyTimeline.snapshots.empty()) {
+                    float graphX = 40.0f;
+                    float graphY = 40.0f;
+                    float graphW = (float)canvasWidth - 80.0f;
+                    float graphH = (float)canvasHeight - 80.0f;
+                    
+                    double eMin = energyTimeline.minKE;
+                    if (energyTimeline.minPE < eMin) eMin = energyTimeline.minPE;
+                    if (energyTimeline.minTotal < eMin) eMin = energyTimeline.minTotal;
+                    
+                    double eMax = energyTimeline.maxKE;
+                    if (energyTimeline.maxPE > eMax) eMax = energyTimeline.maxPE;
+                    if (energyTimeline.maxTotal > eMax) eMax = energyTimeline.maxTotal;
+
+                    double eRange = eMax - eMin;
+                    if (eRange < 0.001) eRange = 1.0;
+                    
+                    eMin -= eRange * 0.05;
+                    eRange *= 1.1; // padding
+                    
+                    DrawRectangle((int)graphX, (int)graphY, (int)graphW, (int)graphH, {0, 0, 0, 120});
+                    DrawRectangleLinesEx({graphX, graphY, graphW, graphH}, 1, {255, 0, 127, 100});
+                    
+                    auto eToY = [&](double e) -> float {
+                        return graphY + graphH - (float)((e - eMin) / eRange) * graphH;
+                    };
+                    
+                    // Zero line
+                    if (eMin < 0.0 && (eMin + eRange) > 0.0) {
+                        float zeroY = eToY(0.0);
+                        DrawLine((int)graphX, (int)zeroY, (int)(graphX + graphW), (int)zeroY, {255, 255, 255, 40});
+                    }
+
+                    size_t n = energyTimeline.snapshots.size();
+                    
+                    // Helper to draw a specific curve
+                    auto drawCurve = [&](double (EnergySnapshot::*field), Color col) {
+                        float prevX = graphX;
+                        float prevY = eToY(energyTimeline.snapshots[0].*field);
+                        for (float px = 1.0f; px <= graphW; px += 1.0f) {
+                            size_t idx = (size_t)(px * (n - 1) / graphW);
+                            if (idx >= n) idx = n - 1;
+                            float curX = graphX + px;
+                            float curY = eToY(energyTimeline.snapshots[idx].*field);
+                            DrawLine((int)prevX, (int)prevY, (int)curX, (int)curY, col);
+                            prevX = curX;
+                            prevY = curY;
+                        }
+                    };
+                    
+                    drawCurve(&EnergySnapshot::potentialEnergy, neonCyan);
+                    drawCurve(&EnergySnapshot::kineticEnergy, neonGreen);
+                    drawCurve(&EnergySnapshot::totalEnergy, neonYellow);
+                    
+                    // Playhead
+                    float playX = graphX + ((float)playbackFrame / (float)(n - 1)) * graphW;
+                    DrawLine((int)playX, (int)graphY, (int)playX, (int)(graphY + graphH), {255, 255, 255, 180});
+                    
+                    // Legend
+                    float legendX = graphX + 10;
+                    float legendY = graphY + 10;
+                    DrawRectangle((int)legendX - 5, (int)legendY - 5, 100, 70, {0, 0, 0, 150});
+                    DrawText("KE",    (int)legendX + 20, (int)legendY,      10, neonGreen);
+                    DrawRectangle((int)legendX, (int)legendY + 2,  10, 8, neonGreen);
+                    DrawText("PE",    (int)legendX + 20, (int)legendY + 20, 10, neonCyan);
+                    DrawRectangle((int)legendX, (int)legendY + 22, 10, 8, neonCyan);
+                    DrawText("Total", (int)legendX + 20, (int)legendY + 40, 10, neonYellow);
+                    DrawRectangle((int)legendX, (int)legendY + 42, 10, 8, neonYellow);
+                    
+                    int frameIdx = (int)playbackFrame;
+                    if (frameIdx >= 0 && frameIdx < (int)n) {
+                        DrawText(TextFormat("KE:%.2f  PE:%.2f  E:%.2f", 
+                                 energyTimeline.snapshots[frameIdx].kineticEnergy, 
+                                 energyTimeline.snapshots[frameIdx].potentialEnergy, 
+                                 energyTimeline.snapshots[frameIdx].totalEnergy),
+                                 (int)graphX + 10, (int)(graphY + graphH - 30), 20, {255, 255, 255, 160});
+                    }
+                } else {
+                    DrawText("No Trace Data for Energy Graph", canvasWidth / 2 - 150, canvasHeight / 2, 20, neonPink);
                 }
-            EndMode2D();
+            }
 
             // --- DRAW RIGHT UI PANEL ---
             DrawRectangle(canvasWidth, 0, uiPanelWidth, currentHeight, uiBg);
@@ -542,6 +637,13 @@ int main(void)
             GuiLabel(Rectangle{(float)panelX, (float)currentY, 80, 20}, "Speed:");
             DrawFineSlider(Rectangle{(float)panelX + 60, (float)currentY, 180, 20}, NULL, TextFormat("%.1fx", playbackSpeed), &playbackSpeed, 0.1f, 10.0f, 0.1f);
             currentY += 40;
+
+            {
+                bool prev = showEnergyGraph;
+                GuiToggle(Rectangle{(float)panelX, (float)currentY, 260, 25}, "Energy Graph (Diagnostics)", &showEnergyGraph);
+                if (showEnergyGraph && !prev) needsEnergyUpdate = true;
+            }
+            currentY += 40;
             
             DrawLine(panelX, currentY, panelX + 260, currentY, neonPink);
             currentY += 20;
@@ -581,7 +683,7 @@ int main(void)
             EndScissorMode();
 
             // Diagnostics export
-            if (GuiButton(Rectangle{(float)panelX, (float)currentHeight - 40, 260, 30}, "Export Variables")) {
+            if (GuiButton(Rectangle{(float)panelX, (float)currentHeight - 75, 260, 30}, "Export Variables")) {
                 auto now = std::chrono::system_clock::now();
                 auto in_time_t = std::chrono::system_clock::to_time_t(now);
                 
@@ -610,9 +712,38 @@ int main(void)
                 exportMessage = "Exported to exports/" + ssFilename.str();
                 exportMessageTimer = 3.0f;
             }
-            DrawText("Drag & Drop a .json file anywhere to import", panelX, currentHeight - 70, 10, {255, 0, 127, 200});
+            if (GuiButton(Rectangle{(float)panelX, (float)currentHeight - 40, 260, 30}, "Export Graph CSV")) {
+                if (!energyTimeline.snapshots.empty()) {
+                    auto now = std::chrono::system_clock::now();
+                    auto in_time_t = std::chrono::system_clock::to_time_t(now);
+                    
+                    std::filesystem::path exeDir = GetApplicationDirectory();
+                    std::filesystem::path exportDir = exeDir / ".." / "exports";
+                    std::error_code ec;
+                    std::filesystem::create_directories(exportDir, ec);
+                    
+                    std::stringstream ssFilename;
+                    ssFilename << "energy_graph_" << std::put_time(std::localtime(&in_time_t), "%Y%m%d_%H%M%S") << ".csv";
+                    std::string filename = (exportDir / ssFilename.str()).string();
+                    
+                    std::ofstream out(filename);
+                    out << "Frame,Time,KineticEnergy,PotentialEnergy,TotalEnergy\n";
+                    for (size_t i = 0; i < energyTimeline.snapshots.size(); ++i) {
+                        const auto& snap = energyTimeline.snapshots[i];
+                        out << i << "," << snap.time << "," << snap.kineticEnergy << "," << snap.potentialEnergy << "," << snap.totalEnergy << "\n";
+                    }
+                    out.close();
+                    
+                    exportMessage = "Exported to exports/" + ssFilename.str();
+                    exportMessageTimer = 3.0f;
+                } else {
+                    exportMessage = "No graph data to export!";
+                    exportMessageTimer = 3.0f;
+                }
+            }
+            DrawText("Drag & Drop a .json file anywhere to import", panelX, currentHeight - 105, 10, {255, 0, 127, 200});
             if (exportMessageTimer > 0) {
-                DrawText(exportMessage.c_str(), panelX, currentHeight - 55, 10, neonGreen);
+                DrawText(exportMessage.c_str(), panelX, currentHeight - 90, 10, neonGreen);
             }
 
             // --- DRAW BOTTOM TIMELINE SCRUBBER ---
