@@ -5,6 +5,8 @@
 #include "GravityBilliards/World.hpp"
 #include "GravityBilliards/EulerIntegrator.hpp"
 #include "GravityBilliards/PhysicsEngine.hpp"
+#include "GravityBilliards/CircleCollisionDetector.hpp"
+#include "GravityBilliards/InelasticCollisionResolver.hpp"
 #include "GravityBilliards/InitialConditions.hpp"
 #include <vector>
 #include <string>
@@ -59,7 +61,9 @@ int main(void)
     
     World world(10, canvasWidth, screenHeight - 60); 
     auto integrator = std::make_shared<EulerIntegrator>();
-    PhysicsEngine sim(integrator);
+    auto detector = std::make_shared<CircleCollisionDetector>();
+    auto resolver = std::make_shared<InelasticCollisionResolver>();
+    PhysicsEngine sim(integrator, detector, resolver);
     sim.stopVelocityThreshold = 0.01;
     sim.dt = 1.0;
 

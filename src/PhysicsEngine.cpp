@@ -1,56 +1,36 @@
 #include "GravityBilliards/PhysicsEngine.hpp"
+#include <optional>
 #include <cmath>
 
 namespace GravityBilliards {
 
-PhysicsEngine::PhysicsEngine(std::shared_ptr<Integrator> integrator) : integrator(integrator) {}
+PhysicsEngine::PhysicsEngine(std::shared_ptr<Integrator> integrator,
+                             std::shared_ptr<ICollisionDetector> detector,
+                             std::shared_ptr<ICollisionResolver> resolver) 
+    : integrator(integrator), collisionDetector(detector), collisionResolver(resolver) {}
 
 void PhysicsEngine::step(const World& world, Vector2D& pos, Vector2D& vel) const {
-    Vector2D accel{0.0, 0.0};
-    bool collided = false;
-    Vector2D collisionNormal{0.0, 0.0};
+    // 1. Check for collisions
+    auto collision = collisionDetector ? collisionDetector->checkCollision(world, pos, particleRadius) : std::nullopt;
     
-    // First pass: Calculate gravity and check for collisions
-    for (const auto& attractor : world.attractors) {
-        double dist = pos.distanceTo(attractor.position);
+    if (collision.has_value()) {
+        // 2. Resolve collision
+        if (collisionResolver) {
+            collisionResolver->resolve(*collision, pos, vel, bounceDamping, dt);
+        }
+    } else {
+        // 3. Normal update (gravity + integration)
+        Vector2D accel{0.0, 0.0};
         
-        if (dist < attractor.radius + particleRadius) {
-            collided = true;
-            // The normal is pointing outward from the attractor center to the particle
-            collisionNormal = (pos - attractor.position).normalized();
-            // Move particle exactly to the surface to avoid sticking
-            pos = attractor.position + (collisionNormal * (attractor.radius + particleRadius));
-            break; // Handle one collision per step
-        } else {
+        for (const auto& attractor : world.attractors) {
+            double dist = pos.distanceTo(attractor.position);
             // Add gravity (Inverse square law)
             double cubeDistance = dist * dist * dist;
-            accel += (attractor.position - pos) * (static_cast<double>(attractor.mass) / cubeDistance);
-        }
-    }
-    
-    if (collided) {
-        // Inelastic collision projection
-        Vector2D p = collisionNormal; // already normalized
-        Vector2D pOrtog{-p.y, p.x};
-        
-        double proyX = vel.dot(p);
-        double proyY = vel.dot(pOrtog);
-        
-        // Restitution threshold: if impact is very slow, do not bounce to allow sleeping
-        if (proyX < 0.0 && proyX > -0.5) {
-            proyX = 0.0;
-        } else {
-            proyX = -proyX / bounceDamping;
+            if (cubeDistance > 0.0001) { // avoid division by zero
+                accel += (attractor.position - pos) * (static_cast<double>(attractor.mass) / cubeDistance);
+            }
         }
         
-        Vector2D Ux = p * proyX;
-        Vector2D Uy = pOrtog * (proyY / bounceDamping);
-        
-        vel = Ux + Uy;
-        
-        pos += vel * dt;
-    } else {
-        // Normal update
         if (integrator) {
             integrator->integrate(pos, vel, accel, dt);
         }

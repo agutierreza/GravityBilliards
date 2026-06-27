@@ -10,6 +10,8 @@
 #include "GravityBilliards/World.hpp"
 #include "GravityBilliards/EulerIntegrator.hpp"
 #include "GravityBilliards/PhysicsEngine.hpp"
+#include "GravityBilliards/CircleCollisionDetector.hpp"
+#include "GravityBilliards/InelasticCollisionResolver.hpp"
 #include "GravityBilliards/InitialConditions.hpp"
 
 using namespace GravityBilliards;
@@ -141,7 +143,9 @@ int main(int argc, char* argv[]) {
     std::cout << "Particle Start Vel: (" << startVel->x << ", " << startVel->y << ")\n";
 
     auto integrator = std::make_shared<EulerIntegrator>();
-    PhysicsEngine sim(integrator);
+    auto detector = std::make_shared<CircleCollisionDetector>();
+    auto resolver = std::make_shared<InelasticCollisionResolver>();
+    PhysicsEngine sim(integrator, detector, resolver);
     sim.stopVelocityThreshold = customStopThreshold.value_or(0.01);
     sim.dt = 1.0; 
 

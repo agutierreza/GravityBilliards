@@ -3,6 +3,8 @@
 #include "GravityBilliards/World.hpp"
 #include "GravityBilliards/Vector2D.hpp"
 #include "GravityBilliards/Integrator.hpp"
+#include "GravityBilliards/ICollisionDetector.hpp"
+#include "GravityBilliards/ICollisionResolver.hpp"
 #include <vector>
 #include <memory>
 
@@ -20,7 +22,7 @@ struct TracePoint {
 
 /**
  * @struct IntegratorResult
- * @brief Holds the final results of a `simulateUntilStop` execution.
+ * @brief The result returned when simulating until the particle comes to a rest.
  */
 struct IntegratorResult {
     Vector2D finalPosition; ///< The location of the particle when the integrator ended.
@@ -31,10 +33,7 @@ struct IntegratorResult {
 
 /**
  * @class PhysicsEngine
- * @brief Orchestrator for the physics simulation.
- * 
- * Handles the simulation loop, gravity fields, and collision detection/resolution.
- * Uses a given Integrator strategy for advancing state through time.
+ * @brief Orchestrates the integration, collision detection, and collision resolution into a cohesive simulation step.
  */
 class PhysicsEngine {
 public:
@@ -64,12 +63,26 @@ public:
      * @brief The mathematical integration strategy used to advance state.
      */
     std::shared_ptr<Integrator> integrator;
+    
+    /**
+     * @brief The geometry checker to detect collisions.
+     */
+    std::shared_ptr<ICollisionDetector> collisionDetector;
+    
+    /**
+     * @brief The physics handler for resolving collisions.
+     */
+    std::shared_ptr<ICollisionResolver> collisionResolver;
 
     /**
-     * @brief Constructs a PhysicsEngine with a specific integration strategy.
+     * @brief Constructs a PhysicsEngine with specific strategies.
      * @param integrator The underlying mathematical integrator to use.
+     * @param detector The collision detection strategy.
+     * @param resolver The collision resolution strategy.
      */
-    PhysicsEngine(std::shared_ptr<Integrator> integrator);
+    PhysicsEngine(std::shared_ptr<Integrator> integrator, 
+                  std::shared_ptr<ICollisionDetector> detector, 
+                  std::shared_ptr<ICollisionResolver> resolver);
 
     /**
      * @brief Performs a single integration step, handling gravity and collision.
