@@ -24,7 +24,10 @@ void World::addRandomAttractors(int numAttractors, double width, double height) 
     for (int i = 0; i < numAttractors; ++i) {
         bool placed = false;
         for (int attempt = 0; attempt < maxAttempts; ++attempt) {
-            Attractor p(massDist(gen), {xDist(gen), yDist(gen)});
+            double m = static_cast<double>(massDist(gen));
+            // Break constant density: radius varies by +/- 20% from the baseline
+            double r = (4.0 * std::sqrt(m)) * (0.8 + ((rand() % 40) / 100.0));
+            Attractor p(m, r, {xDist(gen), yDist(gen)});
             
             // Need to make sure they are fully inside the bounds as well (optional but good)
             if (p.position.x - p.radius < 0 || p.position.x + p.radius > width ||

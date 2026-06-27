@@ -35,7 +35,7 @@ void printHelp() {
     std::cout << "Options:\n";
     std::cout << "  --config <file.json>      Load initialConditions from a JSON export file\n";
     std::cout << "  --attractors-random <N>      Number of random attractors to generate (default: 10 if no fixed attractors)\n";
-    std::cout << "  --attractor <x,y,mass>       Add a fixed attractor. Can be used multiple times.\n";
+    std::cout << "  --attractor <x,y,mass[,radius]> Add a fixed attractor. Can be used multiple times.\n";
     std::cout << "  --pos <x,y>               Starting position of the particle (default: random)\n";
     std::cout << "  --vel <x,y>               Starting velocity of the particle (default: random)\n";
     std::cout << "  --trace-time <start,end>  Time range for the trace (default: 100,1000)\n";
@@ -90,7 +90,9 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--attractor" && i + 1 < argc) {
             auto parts = split(argv[++i], ',');
             if (parts.size() == 3) {
-                fixedAttractors.emplace_back(std::stoi(parts[2]), Vector2D(std::stod(parts[0]), std::stod(parts[1])));
+                fixedAttractors.emplace_back(std::stod(parts[2]), Vector2D(std::stod(parts[0]), std::stod(parts[1])));
+            } else if (parts.size() == 4) {
+                fixedAttractors.emplace_back(std::stod(parts[2]), std::stod(parts[3]), Vector2D(std::stod(parts[0]), std::stod(parts[1])));
             }
         } else if (arg == "--pos" && i + 1 < argc) {
             auto parts = split(argv[++i], ',');

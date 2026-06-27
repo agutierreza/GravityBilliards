@@ -16,9 +16,14 @@ struct Attractor {
     double mass;       ///< The gravitational mass of the attractor. Determines pull strength.
     double radius;     ///< The physical radius of the attractor. Determines collision boundaries.
     Vector2D position; ///< The center coordinates of the attractor in 2D space.
+    
+    // Future-proofing for advanced physics resolvers
+    double spinVelocity = 0.0;       ///< Angular velocity (radians per frame)
+    double surfaceFriction = 0.0;    ///< Coefficient of friction for spinning tangentials
+    double surfaceBounciness = 1.0;  ///< Multiplier for the bounce restitution
 
     /**
-     * @brief Default constructor. Creates an attractor with mass 1 at (0,0).
+     * @brief Default constructor. Creates an attractor with mass 1, radius 4 at (0,0).
      */
     Attractor();
 
@@ -36,19 +41,12 @@ struct Attractor {
     Attractor(int mass, Vector2D position);
 
     /**
-     * @brief Constructs an attractor with a precise double mass and position.
+     * @brief Constructs an attractor with explicit mass, radius, and position.
      * @param m The mass of the attractor.
+     * @param r The physical collision radius.
      * @param pos The center position.
      */
-    Attractor(double m, const Vector2D& pos);
-    
-    /**
-     * @brief Recalculates the radius of the attractor.
-     * 
-     * This is called automatically by the constructor. It assumes a constant 2D density
-     * such that the area of the attractor is proportional to its mass (Area = Mass / Density).
-     */
-    void calculateRadius();
+    Attractor(double m, double r, const Vector2D& pos);
 };
 
 }

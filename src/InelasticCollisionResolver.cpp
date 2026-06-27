@@ -16,11 +16,11 @@ void InelasticCollisionResolver::resolve(const CollisionInfo& info, Vector2D& po
     if (proyX < 0.0 && proyX > -0.5) {
         proyX = 0.0;
     } else {
-        proyX = -proyX / bounceDamping;
+        proyX = (-proyX / bounceDamping) * info.surfaceBounciness;
     }
     
     Vector2D Ux = info.normal * proyX;
-    Vector2D Uy = pOrtog * (proyY / bounceDamping);
+    Vector2D Uy = pOrtog * ((proyY / bounceDamping) * info.surfaceBounciness);
     
     vel = Ux + Uy;
     

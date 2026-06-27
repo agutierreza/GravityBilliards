@@ -11,6 +11,7 @@ std::optional<CollisionInfo> CircleCollisionDetector::checkCollision(const World
             CollisionInfo info;
             info.normal = (pos - attractor.position).normalized();
             info.penetration = minSafeDistance - dist;
+            info.surfaceBounciness = attractor.surfaceBounciness;
             return info;
         }
     }
