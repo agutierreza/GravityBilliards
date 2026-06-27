@@ -1,0 +1,9 @@
+Test: Implement GoogleTest suite and JSON-driven E2E architecture
+
+Introducing a complete testing framework from the ground up:
+- Integrated GoogleTest via CMake.
+- Added pure mathematical Unit Tests for integrators and collision detection/resolution.
+- Added comprehensive End-to-End (E2E) scenario tests ensuring stability of chaotic orbits.
+- Pure data-driven model using JSON fixtures.
+- Implemented native UI trace-stitching logic to support Multi-Stage Maneuvers.
+- Updated README to document test execution and the deterministic philosophy of the suite.

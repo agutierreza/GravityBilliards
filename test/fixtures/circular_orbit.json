@@ -1,0 +1,17 @@
+{
+  "simulation": {
+    "stopVelocityThreshold": 0.01,
+    "particleRadius": 6.0
+  },
+  "particle": {
+    "startPosition": {"x": 0.0, "y": -100.0},
+    "startVelocity": {"x": 3.16227766016838, "y": 0.0}
+  },
+  "attractors": [
+    {
+      "position": {"x": 0.0, "y": 0.0},
+      "mass": 1000,
+      "radius": 20.0
+    }
+  ]
+}

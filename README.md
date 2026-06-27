@@ -46,6 +46,19 @@ Ensure Doxygen is installed on your system and available in your PATH. CMake wil
 Once the build is complete, you can view the interactive HTML documentation by opening:
 `GravityBilliardsEngine/docs/html/index.html`
 
+## Testing
+
+The project includes a comprehensive testing suite powered by GoogleTest, containing both **Unit Tests** (for the core math and physics integrations) and **End-to-End (E2E) Tests** (for the scenarios). Right now, we run all our tests locally...
+
+To run the tests, navigate to your build directory and run:
+
+```bash
+cmake --build . --config Debug --target GravityBilliardsTests
+ctest --output-on-failure
+```
+
+While the Unit Tests are strict, the E2E tests are very relaxed on purpose. Their main point is simply to mathematically verify the deterministic simulations so that you can load them up in the UI and confidently check that what you would expect is what actually happens. Building these E2E physics tests was a lot of fun, and they look super cool when you scrub through them in the GUI!
+
 ## Running the UI Sandbox
 
 Launch the UI executable to interact with the engine visually.

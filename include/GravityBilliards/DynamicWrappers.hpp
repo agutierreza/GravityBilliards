@@ -25,8 +25,8 @@ struct DynamicDetector {
  */
 struct DynamicResolver {
     std::shared_ptr<ICollisionResolver> ptr;
-    void resolve(const CollisionInfo& info, Vector2D& pos, Vector2D& vel, double damping, double dt) const {
-        if (ptr) ptr->resolve(info, pos, vel, damping, dt);
+    void resolve(const CollisionInfo& info, Vector2D& pos, Vector2D& vel, const Vector2D& accel, double damping, double dt) const {
+        if (ptr) ptr->resolve(info, pos, vel, accel, damping, dt);
     }
 };
 

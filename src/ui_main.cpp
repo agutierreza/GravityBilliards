@@ -25,6 +25,11 @@
 
 using namespace GravityBilliards;
 
+struct UIManeuver {
+    double frame;
+    Vector2D deltaV;
+};
+
 // Helper to draw a slider with fine keyboard controls when hovering
 bool DrawFineSlider(Rectangle bounds, const char* textLeft, const char* textRight, float* value, float min, float max, float fineStep) {
     bool changed = GuiSlider(bounds, textLeft, textRight, value, min, max);
@@ -94,7 +99,11 @@ int main(void)
     int numAttractors = 10;
     float numAttractorsFloat = 10.0f;
 
+    int activeScenario = 0;
+    const char* scenarioList = "Circular Orbit;Elliptical Drift;Two Planet Equilibrium;Figure-8 Orbit;Precessing Figure-8;SubOrbital Hop;Barely Escaping;Orbital Insertion Burn";
+
     std::vector<TracePoint> trace;
+    std::vector<UIManeuver> activeManeuvers;
     bool needsTraceUpdate = true;
     int stopFrameIdx = -1;
     
@@ -384,16 +393,72 @@ int main(void)
             Vector2D particlePos(startX, startY);
             Vector2D particleVel(velX, velY);
             
-            // 1. Query the engine for the true stop time 
-            IntegratorResult result = sim.simulateUntilStop(world, particlePos, particleVel, 5000.0);
-            
-            // 2. Fetch the trace up to the timeout for visualization
-            trace = sim.getTrace(world, particlePos, particleVel, 0.0, 5000.0);
-            
-            // 3. Mark the stop frame natively from the engine's result
+            trace.clear();
             stopFrameIdx = -1;
-            if (result.stopped) {
-                stopFrameIdx = (int)result.timeElapsed;
+            
+            if (activeManeuvers.empty()) {
+                // 1. Query the engine for the true stop time 
+                IntegratorResult result = sim.simulateUntilStop(world, particlePos, particleVel, 5000.0);
+                
+                // 2. Fetch the trace up to the timeout for visualization
+                trace = sim.getTrace(world, particlePos, particleVel, 0.0, 5000.0);
+                
+                // 3. Mark the stop frame natively from the engine's result
+                if (result.stopped) {
+                    stopFrameIdx = (int)result.timeElapsed;
+                }
+            } else {
+                // Multi-Stage Burn Trace Stitching
+                double currentTime = 0.0;
+                Vector2D currentPos = particlePos;
+                Vector2D currentVel = particleVel;
+                
+                for (const auto& m : activeManeuvers) {
+                    double legDuration = m.frame - currentTime;
+                    if (legDuration <= 0) continue; // Skip if maneuver is in the past
+                    
+                    auto legTrace = sim.getTrace(world, currentPos, currentVel, 0.0, legDuration);
+                    
+                    // Adjust relative time to absolute time
+                    for (auto& tp : legTrace) {
+                        tp.time += currentTime;
+                    }
+                    
+                    // Append leg to main trace
+                    if (!trace.empty() && !legTrace.empty()) {
+                        legTrace.erase(legTrace.begin()); // Avoid duplicate point
+                    }
+                    trace.insert(trace.end(), legTrace.begin(), legTrace.end());
+                    
+                    if (!trace.empty()) {
+                        currentPos = trace.back().position;
+                        currentVel = trace.back().velocity;
+                    }
+                    currentTime = m.frame;
+                    
+                    // Apply Burn
+                    currentVel += m.deltaV;
+                }
+                
+                // Final Leg
+                double finalLegDuration = 5000.0 - currentTime;
+                if (finalLegDuration > 0) {
+                    auto finalResult = sim.simulateUntilStop(world, currentPos, currentVel, finalLegDuration);
+                    auto finalLeg = sim.getTrace(world, currentPos, currentVel, 0.0, finalLegDuration);
+                    
+                    for (auto& tp : finalLeg) {
+                        tp.time += currentTime;
+                    }
+                    
+                    if (!trace.empty() && !finalLeg.empty()) {
+                        finalLeg.erase(finalLeg.begin()); 
+                    }
+                    trace.insert(trace.end(), finalLeg.begin(), finalLeg.end());
+                    
+                    if (finalResult.stopped) {
+                        stopFrameIdx = (int)(currentTime + finalResult.timeElapsed);
+                    }
+                }
             }
             
             needsTraceUpdate = false;
@@ -444,6 +509,17 @@ int main(void)
                             Vector2 start = {(float)trace[i].position.x, (float)trace[i].position.y};
                             Vector2 end = {(float)trace[i+1].position.x, (float)trace[i+1].position.y};
                             DrawLineEx(start, end, 1.5f, {255, 0, 127, 200}); 
+                        }
+                        
+                        // Draw Maneuver Indicators
+                        for (const auto& m : activeManeuvers) {
+                            for (const auto& tp : trace) {
+                                if (std::abs(tp.time - m.frame) < 0.1) {
+                                    DrawCircleV({(float)tp.position.x, (float)tp.position.y}, 5.0f, YELLOW);
+                                    DrawCircleLines(tp.position.x, tp.position.y, 8.0f, RED);
+                                    break;
+                                }
+                            }
                         }
                     }
 
@@ -598,7 +674,73 @@ int main(void)
                 needsGravityMapUpdate = true;
                 playbackFrame = 0;
             }
-            currentY += 50;
+            currentY += 40;
+            
+            DrawText("SCENARIOS", panelX, currentY, 20, neonCyan);
+            currentY += 30;
+            
+            GuiComboBox(Rectangle{(float)panelX, (float)currentY, 260, 30}, scenarioList, &activeScenario);
+            currentY += 40;
+            
+            if (GuiButton(Rectangle{(float)panelX, (float)currentY, 260, 30}, "Load Scenario")) {
+                std::string fixturePath = "";
+                if (activeScenario == 0) fixturePath = "test/fixtures/circular_orbit.json";
+                else if (activeScenario == 1) fixturePath = "test/fixtures/elliptical_drift.json";
+                else if (activeScenario == 2) fixturePath = "test/fixtures/two_planet_equilibrium.json";
+                else if (activeScenario == 3) fixturePath = "test/fixtures/figure_8_orbit.json";
+                else if (activeScenario == 4) fixturePath = "test/fixtures/precessing_figure_8.json";
+                else if (activeScenario == 5) fixturePath = "test/fixtures/suborbital_hop.json";
+                else if (activeScenario == 6) fixturePath = "test/fixtures/barely_escaping.json";
+                else if (activeScenario == 7) fixturePath = "test/fixtures/orbital_insertion_burn.json";
+                
+                try {
+                    std::ifstream f(fixturePath);
+                    if (f.is_open()) {
+                        nlohmann::json j;
+                        f >> j;
+                        InitialConditions s = InitialConditions::fromJson(j);
+                        if (!s.world.attractors.empty()) {
+                            world.attractors = s.world.attractors;
+                            numAttractorsFloat = (float)world.attractors.size();
+                        }
+                        startX = s.particleStartPos.x;
+                        startY = s.particleStartPos.y;
+                        velX = s.particleStartVel.x;
+                        velY = s.particleStartVel.y;
+                        velAngle = std::atan2(velY, velX) * 180.0f / PI;
+                        velForce = std::sqrt(velX*velX + velY*velY);
+                        sim.stopVelocityThreshold = s.stopVelocityThreshold;
+                        particleRadiusFloat = s.particleRadius;
+                        
+                        if (activeScenario == 6) { // Barely Escaping
+                            camera.zoom = 0.2f;
+                            camera.target = (Vector2){ 0.0f, 0.0f };
+                        } else {
+                            camera.zoom = 1.0f;
+                            camera.target = (Vector2){ 0.0f, 0.0f };
+                        }
+                        
+                        activeManeuvers.clear();
+                        std::string maneuverPath = fixturePath.substr(0, fixturePath.find_last_of('.')) + "_maneuvers.json";
+                        std::ifstream fm(maneuverPath);
+                        if (fm.is_open()) {
+                            nlohmann::json jm;
+                            fm >> jm;
+                            for (const auto& m : jm) {
+                                UIManeuver man;
+                                man.frame = m["frame"].get<double>();
+                                man.deltaV = Vector2D(m["deltaV"]["x"].get<double>(), m["deltaV"]["y"].get<double>());
+                                activeManeuvers.push_back(man);
+                            }
+                        }
+                        
+                        needsTraceUpdate = true;
+                        needsGravityMapUpdate = true;
+                        playbackFrame = 0;
+                    }
+                } catch (...) {}
+            }
+            currentY += 35;
             
             DrawLine(panelX, currentY, panelX + 260, currentY, neonPink);
             currentY += 20;
