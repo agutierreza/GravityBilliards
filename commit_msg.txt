@@ -1,9 +1,7 @@
-Test: Implement GoogleTest suite and JSON-driven E2E architecture
+feat: Implement decoupled GameLoop, SimulationRunner, and Command pattern
 
-Introducing a complete testing framework from the ground up:
-- Integrated GoogleTest via CMake.
-- Added pure mathematical Unit Tests for integrators and collision detection/resolution.
-- Added comprehensive End-to-End (E2E) scenario tests ensuring stability of chaotic orbits.
-- Pure data-driven model using JSON fixtures.
-- Implemented native UI trace-stitching logic to support Multi-Stage Maneuvers.
-- Updated README to document test execution and the deterministic philosophy of the suite.
+- Introduced `GameCommand` interface and concrete implementations (`ApplyThrustCommand`, `ApplyForceCommand`) to encapsulate agnostic mathematical inputs.
+- Created `GameLoop` class to orchestrate tick-by-tick physics simulation and handle command execution deterministically.
+- Defined `InputProvider` interface for abstracting UI/peripheral inputs.
+- Developed `SimulationRunner` using an accumulator pattern to safely bridge real-world elapsed time (lag/variable framerates) into fixed-step GameLoop ticks, dynamically querying the `InputProvider`.
+- Added comprehensive E2E validation tests (`test_game_loop.cpp` and `test_simulation_runner.cpp`) that trace and perfectly match the mathematical ground-truths of the original engine.

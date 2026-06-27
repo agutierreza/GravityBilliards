@@ -53,6 +53,8 @@ add_executable(GravityBilliardsTests
     test/test_collision_detector.cpp
     test/test_collision_resolver.cpp
     test/test_e2e_scenarios.cpp
+    test/test_game_loop.cpp
+    test/test_simulation_runner.cpp
 )
 target_link_libraries(GravityBilliardsTests PRIVATE GravityBilliardsPhysics gtest_main)
 
