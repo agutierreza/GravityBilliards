@@ -10,9 +10,11 @@
 #include "GravityBilliards/World.hpp"
 #include "GravityBilliards/EulerIntegrator.hpp"
 #include "GravityBilliards/PhysicsEngine.hpp"
+#include "GravityBilliards/DynamicWrappers.hpp"
 #include "GravityBilliards/CircleCollisionDetector.hpp"
 #include "GravityBilliards/InelasticCollisionResolver.hpp"
 #include "GravityBilliards/InitialConditions.hpp"
+#include <chrono>
 
 using namespace GravityBilliards;
 
@@ -139,15 +141,48 @@ int main(int argc, char* argv[]) {
                   << ", Pos=(" << p.position.x << ", " << p.position.y << ")\n";
     }
 
-    std::cout << "\nParticle Start Pos: (" << startPos->x << ", " << startPos->y << ")\n";
-    std::cout << "Particle Start Vel: (" << startVel->x << ", " << startVel->y << ")\n";
+    std::cout << "\n--- Benchmarking Static vs Dynamic PhysicsEngine ---\n";
+    double testDuration = 2000.0;
+    
+    // 1. Static Setup
+    EulerIntegrator staticInt;
+    CircleCollisionDetector staticDet;
+    InelasticCollisionResolver staticRes;
+    PhysicsEngine<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> staticSim(staticInt, staticDet, staticRes);
+    staticSim.stopVelocityThreshold = customStopThreshold.value_or(0.01);
+    staticSim.dt = 1.0;
 
-    auto integrator = std::make_shared<EulerIntegrator>();
-    auto detector = std::make_shared<CircleCollisionDetector>();
-    auto resolver = std::make_shared<InelasticCollisionResolver>();
-    PhysicsEngine sim(integrator, detector, resolver);
-    sim.stopVelocityThreshold = customStopThreshold.value_or(0.01);
-    sim.dt = 1.0; 
+    auto t1 = std::chrono::high_resolution_clock::now();
+    for(int i=0; i<100; ++i) {
+        staticSim.getTrace(world, *startPos, *startVel, 0.0, testDuration);
+    }
+    auto t2 = std::chrono::high_resolution_clock::now();
+    double staticTime = std::chrono::duration<double, std::milli>(t2 - t1).count();
+    
+    // 2. Dynamic Setup
+    auto dynIntPtr = std::make_shared<EulerIntegrator>();
+    auto dynDetPtr = std::make_shared<CircleCollisionDetector>();
+    auto dynResPtr = std::make_shared<InelasticCollisionResolver>();
+    DynamicIntegrator dIntWrap{dynIntPtr};
+    DynamicDetector dDetWrap{dynDetPtr};
+    DynamicResolver dResWrap{dynResPtr};
+    PhysicsEngine<DynamicIntegrator, DynamicDetector, DynamicResolver> dynamicSim(dIntWrap, dDetWrap, dResWrap);
+    dynamicSim.stopVelocityThreshold = customStopThreshold.value_or(0.01);
+    dynamicSim.dt = 1.0;
+
+    auto t3 = std::chrono::high_resolution_clock::now();
+    for(int i=0; i<100; ++i) {
+        dynamicSim.getTrace(world, *startPos, *startVel, 0.0, testDuration);
+    }
+    auto t4 = std::chrono::high_resolution_clock::now();
+    double dynamicTime = std::chrono::duration<double, std::milli>(t4 - t3).count();
+    
+    std::cout << "Static  (Templates)    Time for 100 traces: " << staticTime << " ms\n";
+    std::cout << "Dynamic (Virtual/Ptrs) Time for 100 traces: " << dynamicTime << " ms\n";
+    std::cout << "Performance Difference: Static is " << (dynamicTime / staticTime) << "x faster.\n\n";
+
+    // Use static for the rest of the simulation
+    auto& sim = staticSim;
 
     // 1. Simulate until stop
     std::cout << "\nSimulating until stop (timeout " << timeout << " frames)...\n";

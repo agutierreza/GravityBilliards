@@ -2,11 +2,10 @@
 
 #include "GravityBilliards/World.hpp"
 #include "GravityBilliards/Vector2D.hpp"
-#include "GravityBilliards/Integrator.hpp"
-#include "GravityBilliards/ICollisionDetector.hpp"
-#include "GravityBilliards/ICollisionResolver.hpp"
+#include "GravityBilliards/CollisionTypes.hpp"
 #include <vector>
-#include <memory>
+#include <optional>
+#include <cmath>
 
 namespace GravityBilliards {
 
@@ -34,45 +33,46 @@ struct IntegratorResult {
 /**
  * @class PhysicsEngine
  * @brief Orchestrates the integration, collision detection, and collision resolution into a cohesive simulation step.
+ * 
+ * Uses Static Polymorphism (Templates) for maximum performance.
  */
+template <typename TIntegrator, typename TDetector, typename TResolver>
 class PhysicsEngine {
 public:
     /**
      * @brief The time step delta applied per frame of physics integration.
-     * Larger values calculate faster but reduce physics accuracy. (Default: 1.0)
      */
     double dt = 1.0;
-
+    
     /**
      * @brief The velocity threshold squared below which the particle is considered completely "stopped".
      */
     double stopVelocityThreshold = 0.05;
-
+    
     /**
      * @brief The energy loss damping applied to velocity on every bounce.
      */
     double bounceDamping = 1.2;
-
+    
     /**
      * @brief The physical radius of the moving particle. 
-     * Used exclusively to pad the collision boundary around attractors.
      */
     double particleRadius = 6.0;
 
     /**
      * @brief The mathematical integration strategy used to advance state.
      */
-    std::shared_ptr<Integrator> integrator;
+    TIntegrator integrator;
     
     /**
      * @brief The geometry checker to detect collisions.
      */
-    std::shared_ptr<ICollisionDetector> collisionDetector;
+    TDetector collisionDetector;
     
     /**
      * @brief The physics handler for resolving collisions.
      */
-    std::shared_ptr<ICollisionResolver> collisionResolver;
+    TResolver collisionResolver;
 
     /**
      * @brief Constructs a PhysicsEngine with specific strategies.
@@ -80,52 +80,85 @@ public:
      * @param detector The collision detection strategy.
      * @param resolver The collision resolution strategy.
      */
-    PhysicsEngine(std::shared_ptr<Integrator> integrator, 
-                  std::shared_ptr<ICollisionDetector> detector, 
-                  std::shared_ptr<ICollisionResolver> resolver);
+    PhysicsEngine(TIntegrator integrator, TDetector detector, TResolver resolver)
+        : integrator(std::move(integrator)), collisionDetector(std::move(detector)), collisionResolver(std::move(resolver)) {}
 
     /**
      * @brief Performs a single integration step, handling gravity and collision.
-     * 
-     * Includes a restitution threshold to prevent micro-bouncing on low-velocity impacts.
-     * 
      * @param world The attractor layout.
      * @param pos Current position (modified in place).
      * @param vel Current velocity (modified in place).
      */
-    void step(const World& world, Vector2D& pos, Vector2D& vel) const;
+    void step(const World& world, Vector2D& pos, Vector2D& vel) const {
+        auto collision = collisionDetector.checkCollision(world, pos, particleRadius);
+        
+        if (collision.has_value()) {
+            collisionResolver.resolve(*collision, pos, vel, bounceDamping, dt);
+        } else {
+            Vector2D accel{0.0, 0.0};
+            for (const auto& attractor : world.attractors) {
+                double dist = pos.distanceTo(attractor.position);
+                double cubeDistance = dist * dist * dist;
+                if (cubeDistance > 0.0001) { 
+                    accel += (attractor.position - pos) * (static_cast<double>(attractor.mass) / cubeDistance);
+                }
+            }
+            integrator.integrate(pos, vel, accel, dt);
+        }
+    }
 
     /**
      * @brief Simulates exactly `time` frames into the future and returns the end position.
-     * Useful for predicting where the ball will be at a specific moment without storing a trace.
-     * 
      * @param world The attractor layout.
      * @param startPos Initial particle position.
      * @param startVelocity Initial particle velocity.
      * @param time The exact number of frames to integrate forward.
      * @return The predicted final Vector2D position.
      */
-    Vector2D predictPosition(const World& world, Vector2D startPos, Vector2D startVelocity, double time) const;
+    Vector2D predictPosition(const World& world, Vector2D startPos, Vector2D startVelocity, double time) const {
+        Vector2D pos = startPos;
+        Vector2D vel = startVelocity;
+        int numSteps = static_cast<int>(time / dt);
+        for (int i = 0; i < numSteps; ++i) {
+            step(world, pos, vel);
+        }
+        return pos;
+    }
 
     /**
      * @brief Integrates physics continuously until the particle's velocity remains below `stopVelocityThreshold` for 15 consecutive frames.
-     * 
-     * The 15-frame requirement prevents premature stops during bounce apexes where velocity momentarily drops near zero.
-     * 
      * @param world The attractor layout.
      * @param startPos Initial particle position.
      * @param startVelocity Initial particle velocity.
-     * @param timeoutSeconds A fail-safe timeout in frames to prevent infinite loops if the particle escapes gravity.
+     * @param timeoutSeconds A fail-safe timeout in frames to prevent infinite loops.
      * @return An IntegratorResult struct containing the stopping data.
      */
-    IntegratorResult simulateUntilStop(const World& world, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const;
+    IntegratorResult simulateUntilStop(const World& world, Vector2D startPos, Vector2D startVelocity, double timeoutSeconds) const {
+        Vector2D pos = startPos;
+        Vector2D vel = startVelocity;
+        double elapsed = 0.0;
+        bool stopped = false;
+        double timeBelowThreshold = 0.0;
+        
+        while (elapsed < timeoutSeconds) {
+            step(world, pos, vel);
+            elapsed += dt;
+            
+            if (vel.magnitudeSquared() < (stopVelocityThreshold * stopVelocityThreshold)) {
+                timeBelowThreshold += dt;
+                if (timeBelowThreshold >= 15.0) {
+                    stopped = true;
+                    break;
+                }
+            } else {
+                timeBelowThreshold = 0.0;
+            }
+        }
+        return {pos, vel, elapsed, stopped};
+    }
 
     /**
      * @brief Extracts a dense timeline array of the particle's movement between two points in time.
-     * 
-     * This function pre-allocates memory and returns a fully populated vector of `TracePoint`s.
-     * It is heavily optimized for real-time visualization and playback.
-     * 
      * @param world The attractor layout.
      * @param startPos Initial particle position.
      * @param startVelocity Initial particle velocity.
@@ -133,7 +166,27 @@ public:
      * @param endTime The frame number to stop recording.
      * @return A chronological array of state snapshots.
      */
-    std::vector<TracePoint> getTrace(const World& world, Vector2D startPos, Vector2D startVelocity, double startTime, double endTime) const;
+    std::vector<TracePoint> getTrace(const World& world, Vector2D startPos, Vector2D startVelocity, double startTime, double endTime) const {
+        std::vector<TracePoint> trace;
+        if (endTime < startTime || startTime < 0.0) return trace;
+        
+        int stepsToSimulate = static_cast<int>(endTime / dt);
+        int stepsToRecord = static_cast<int>((endTime - startTime) / dt);
+        trace.reserve(stepsToRecord + 1);
+        
+        Vector2D pos = startPos;
+        Vector2D vel = startVelocity;
+        double currentSimTime = 0.0;
+        
+        for (int i = 0; i <= stepsToSimulate; ++i) {
+            if (currentSimTime >= startTime && currentSimTime <= endTime) {
+                trace.push_back({pos, vel, currentSimTime});
+            }
+            step(world, pos, vel);
+            currentSimTime += dt;
+        }
+        return trace;
+    }
 };
 
 } // namespace GravityBilliards

@@ -11,7 +11,6 @@ add_library(GravityBilliardsPhysics
     src/Attractor.cpp
     src/World.cpp
     src/EulerIntegrator.cpp
-    src/PhysicsEngine.cpp
     src/CircleCollisionDetector.cpp
     src/InelasticCollisionResolver.cpp
     src/InitialConditions.cpp
