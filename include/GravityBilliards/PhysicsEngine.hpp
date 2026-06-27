@@ -52,7 +52,7 @@ public:
     /**
      * @brief The energy loss damping applied to velocity on every bounce.
      */
-    double bounceDamping = 1.2;
+    double bounceDamping = 0.8;
     
     /**
      * @brief The physical radius of the moving particle. 
@@ -85,25 +85,29 @@ public:
 
     /**
      * @brief Performs a single integration step, handling gravity and collision.
+     * 
+     * Gravity forces are computed and unconditionally integrated first to update position and velocity.
+     * Then, collisions are checked. If detected, the collision resolver will zero out normal velocity 
+     * and push the particle to the surface, dynamically using the frame's acceleration for resting calculations.
+     * 
      * @param world The attractor layout.
      * @param pos Current position (modified in place).
      * @param vel Current velocity (modified in place).
      */
     void step(const World& world, Vector2D& pos, Vector2D& vel) const {
-        auto collision = collisionDetector.checkCollision(world, pos, particleRadius);
-        
-        if (collision.has_value()) {
-            collisionResolver.resolve(*collision, pos, vel, bounceDamping, dt);
-        } else {
-            Vector2D accel{0.0, 0.0};
-            for (const auto& attractor : world.attractors) {
-                double dist = pos.distanceTo(attractor.position);
-                double cubeDistance = dist * dist * dist;
-                if (cubeDistance > 0.0001) { 
-                    accel += (attractor.position - pos) * (static_cast<double>(attractor.mass) / cubeDistance);
-                }
+        Vector2D accel{0.0, 0.0};
+        for (const auto& attractor : world.attractors) {
+            double dist = pos.distanceTo(attractor.position);
+            double cubeDistance = dist * dist * dist;
+            if (cubeDistance > 0.0001) { 
+                accel += (attractor.position - pos) * (static_cast<double>(attractor.mass) / cubeDistance);
             }
-            integrator.integrate(pos, vel, accel, dt);
+        }
+        integrator.integrate(pos, vel, accel, dt);
+
+        auto collision = collisionDetector.checkCollision(world, pos, particleRadius);
+        if (collision.has_value()) {
+            collisionResolver.resolve(*collision, pos, vel, accel, bounceDamping, dt);
         }
     }
 

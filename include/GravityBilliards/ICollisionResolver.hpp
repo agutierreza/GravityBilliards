@@ -18,10 +18,11 @@ public:
      * @param info Details of the collision.
      * @param pos Particle position (modified in place).
      * @param vel Particle velocity (modified in place).
+     * @param accel The total acceleration applied this frame (used to calculate dynamic sleep thresholds).
      * @param bounceDamping Material property dictating energy loss.
      * @param dt Time step delta.
      */
-    virtual void resolve(const CollisionInfo& info, Vector2D& pos, Vector2D& vel, double bounceDamping, double dt) const = 0;
+    virtual void resolve(const CollisionInfo& info, Vector2D& pos, Vector2D& vel, const Vector2D& accel, double bounceDamping, double dt) const = 0;
 };
 
 } // namespace GravityBilliards
