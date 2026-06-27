@@ -4,14 +4,24 @@ A high-performance C++ 2D physics engine designed specifically for calculating g
 
 This engine is the modern C++ reincarnation of the [GravityBilliardsSimulator](https://github.com/agutierreza/GravityBilliardsSimulator) originally developed in 2013. The core physics logic has been completely extracted, refactored into a highly-modular architecture, and optimized with zero-allocation trace generation. It now serves as the foundational sandbox and engine for future N-body projects, orbital games, or synthwave physics experiments.
 
+## Core Architecture
+
+### Dual Static/Dynamic Polymorphism
+The heart of the physics system is a header-only template class (`PhysicsEngine<TIntegrator, TDetector, TResolver>`). This provides two massive advantages depending on your use case:
+- **Pure Static Dispatch (Maximum Performance):** When instantiated with raw concrete classes, the compiler inlines all math operations. This eliminates virtual function overhead, making batch trace generation for visualizers blazing fast.
+- **Dynamic Type Erasure (Maximum Flexibility):** The library provides `DynamicWrappers` which encapsulate `std::shared_ptr` interfaces. Games can inject these wrappers into the static template to hot-swap collision and integration logic at runtime, without duplicating the engine core.
+
+### Data-Oriented Containers
+Physics entities (like `Attractor`) are built as pure, simple data structures rather than complex polymorphic hierarchies. The engine prioritizes cache-friendly data structs with decoupled properties (mass, radius, surface bounciness, friction) to ensure simplicity and raw speed.
+
 ## Project Structure
 
 The project builds three separate targets:
 
 1. **`GravityBilliardsPhysics` (Static Library)**
-   The headless core engine. It contains the pure math and logic for `Vector2D`, `Attractor`, `World`, and `Integrator`. You can link this library directly into your own video games or applications.
+   The headless core engine. It contains the math and logic for `Vector2D`, `Attractor`, `World`, `PhysicsEngine`, and the collision interfaces. You can link this library directly into your own video games or applications.
 2. **`GravityBilliardsCLI` (Command Line Interface)**
-   A terminal-based diagnostic tool. It loads JSON configurations to simulate physics initial conditions headless, generating automated SVGs and traces for regression testing.
+   A terminal-based diagnostic tool. It loads JSON configurations to simulate physics initial conditions headless, generating automated SVGs, traces, and performance benchmarks for regression testing.
 3. **`GravityBilliardsUI` (Graphical Sandbox)**
    An interactive Raylib visual debugger and playground. It provides a synthwave-themed UI to tweak vectors, masses, and thresholds in real-time, functioning primarily as a visual "scrubber" and testing tool for the core physics math.
 
