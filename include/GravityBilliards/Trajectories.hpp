@@ -2,6 +2,7 @@
 
 #include "GravityBilliards/Vector2D.hpp"
 #include <cmath>
+#include <variant>
 
 namespace GravityBilliards {
 
@@ -138,5 +139,11 @@ struct Trajectories {
         return std::sqrt(2.0 * parentMass / distance);
     }
 };
+
+/**
+ * @brief A statically-typed container that can hold ANY of our defined trajectories.
+ * To add a new trajectory type in the future, simply append it to this list!
+ */
+using TrajectoryVariant = std::variant<KeplerOrbit, KinematicTrajectory>;
 
 } // namespace GravityBilliards

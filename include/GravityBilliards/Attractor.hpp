@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Vector2D.hpp"
+#include "Trajectories.hpp"
+#include <optional>
 
 namespace GravityBilliards {
 
@@ -21,6 +23,10 @@ struct Attractor {
     double spinVelocity = 0.0;       ///< Angular velocity (radians per frame)
     double surfaceFriction = 0.0;    ///< Coefficient of friction for spinning tangentials
     double surfaceBounciness = 1.0;  ///< Multiplier for the bounce restitution
+
+    // Optional parameters for moving planets on rails
+    std::optional<TrajectoryVariant> trajectory;    ///< If present, this attractor moves along a trajectory.
+    std::optional<int> parentAttractorIndex;        ///< The index of the attractor this one orbits (if applicable).
 
     /**
      * @brief Default constructor. Creates an attractor with mass 1, radius 4 at (0,0).

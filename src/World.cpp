@@ -84,4 +84,27 @@ double World::getGravityPotentialAt(const Vector2D& pos) const {
     return potential;
 }
 
+void World::advance(double time) {
+    for (auto& attractor : attractors) {
+        if (attractor.trajectory.has_value()) {
+            std::visit([&](auto&& traj) {
+                using T = std::decay_t<decltype(traj)>;
+                if constexpr (std::is_same_v<T, KeplerOrbit>) {
+                    if (attractor.parentAttractorIndex.has_value()) {
+                        int parentIdx = attractor.parentAttractorIndex.value();
+                        if (parentIdx >= 0 && parentIdx < attractors.size()) {
+                            const auto& parent = attractors[parentIdx];
+                            attractor.position = Trajectories::solveKeplerOrbit(
+                                traj, parent.position, parent.mass, time
+                            );
+                        }
+                    }
+                } else if constexpr (std::is_same_v<T, KinematicTrajectory>) {
+                    attractor.position = Trajectories::solveKinematicTrajectory(traj, time);
+                }
+            }, attractor.trajectory.value());
+        }
+    }
+}
+
 } // namespace GravityBilliards

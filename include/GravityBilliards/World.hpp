@@ -84,6 +84,12 @@ public:
      * @return The scalar gravitational potential.
      */
     double getGravityPotentialAt(const Vector2D& pos) const;
+
+    /**
+     * @brief Advances the state of the world, updating positions of any mobile attractors.
+     * @param time The absolute simulation time.
+     */
+    void advance(double time);
 };
 
 }

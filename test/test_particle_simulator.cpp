@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "GravityBilliards/GameLoop.hpp"
+#include "GravityBilliards/ParticleSimulator.hpp"
 #include "GravityBilliards/PhysicsEngine.hpp"
 #include "GravityBilliards/EulerIntegrator.hpp"
 #include "GravityBilliards/CircleCollisionDetector.hpp"
@@ -23,7 +23,7 @@ InitialConditions LoadFixture(const std::string& filename) {
 
 } // namespace
 
-class GameLoopTest : public ::testing::Test {
+class ParticleSimulatorTest : public ::testing::Test {
 protected:
     EulerIntegrator integrator;
     CircleCollisionDetector detector;
@@ -37,7 +37,7 @@ protected:
         engine.bounceDamping = 0.8;
     }
 
-    void verifyTraceMatch(GameLoop<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver>& loop, 
+    void verifyTraceMatch(ParticleSimulator<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver>& loop, 
                           const std::vector<TracePoint>& trace, int startOffset = 0) {
         // Assert that the current game loop state matches the beginning of the trace (before step)
         for (size_t i = 0; i < trace.size() - 1; ++i) { // Ignore the very last point since we step from i to i+1
@@ -62,96 +62,96 @@ protected:
     }
 };
 
-TEST_F(GameLoopTest, CircularOrbit) {
+TEST_F(ParticleSimulatorTest, CircularOrbit) {
     InitialConditions ic = LoadFixture("circular_orbit.json");
     ic.particleRadius = 5.0; // match test setup
     
     auto trace = engine.getTrace(ic.world, ic.particleStartPos, ic.particleStartVel, 0.0, 1000.0);
     ASSERT_EQ(trace.size(), 1001);
 
-    GameLoop<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
+    ParticleSimulator<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
     loop.getEngine().bounceDamping = 0.8;
     loop.getEngine().dt = 1.0;
     
     verifyTraceMatch(loop, trace);
 }
 
-TEST_F(GameLoopTest, EllipticalOrbitDriftBaseline) {
+TEST_F(ParticleSimulatorTest, EllipticalOrbitDriftBaseline) {
     InitialConditions ic = LoadFixture("elliptical_drift.json");
     ic.particleRadius = 5.0;
 
     auto trace = engine.getTrace(ic.world, ic.particleStartPos, ic.particleStartVel, 0.0, 500.0);
     ASSERT_EQ(trace.size(), 501);
 
-    GameLoop<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
+    ParticleSimulator<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
     loop.getEngine().bounceDamping = 0.8;
     
     verifyTraceMatch(loop, trace);
 }
 
-TEST_F(GameLoopTest, TwoPlanetEquilibrium) {
+TEST_F(ParticleSimulatorTest, TwoPlanetEquilibrium) {
     InitialConditions ic = LoadFixture("two_planet_equilibrium.json");
     ic.particleRadius = 5.0;
 
     auto trace = engine.getTrace(ic.world, ic.particleStartPos, ic.particleStartVel, 0.0, 1000.0);
     
-    GameLoop<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
+    ParticleSimulator<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
     loop.getEngine().bounceDamping = 0.8;
     
     verifyTraceMatch(loop, trace);
 }
 
-TEST_F(GameLoopTest, Figure8Orbit) {
+TEST_F(ParticleSimulatorTest, Figure8Orbit) {
     InitialConditions ic = LoadFixture("figure_8_orbit.json");
     ic.particleRadius = 5.0;
 
     auto trace = engine.getTrace(ic.world, ic.particleStartPos, ic.particleStartVel, 0.0, 5000.0);
 
-    GameLoop<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
+    ParticleSimulator<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
     loop.getEngine().bounceDamping = 0.8;
 
     verifyTraceMatch(loop, trace);
 }
 
-TEST_F(GameLoopTest, PrecessingFigure8Orbit) {
+TEST_F(ParticleSimulatorTest, PrecessingFigure8Orbit) {
     InitialConditions ic = LoadFixture("precessing_figure_8.json");
     ic.particleRadius = 5.0;
 
     auto trace = engine.getTrace(ic.world, ic.particleStartPos, ic.particleStartVel, 0.0, 5000.0);
 
-    GameLoop<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
+    ParticleSimulator<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
     loop.getEngine().bounceDamping = 0.8;
 
     verifyTraceMatch(loop, trace);
 }
 
-TEST_F(GameLoopTest, SubOrbitalHop) {
+TEST_F(ParticleSimulatorTest, SubOrbitalHop) {
     InitialConditions ic = LoadFixture("suborbital_hop.json");
     ic.particleRadius = 5.0;
 
     // Simulate for 5000 frames (it will stop before that)
     auto trace = engine.getTrace(ic.world, ic.particleStartPos, ic.particleStartVel, 0.0, 5000.0);
 
-    GameLoop<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
+    ParticleSimulator<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
     loop.getEngine().bounceDamping = 0.8;
     
     verifyTraceMatch(loop, trace);
     EXPECT_TRUE(loop.isStopped());
 }
 
-TEST_F(GameLoopTest, BarelyEscaping) {
+TEST_F(ParticleSimulatorTest, BarelyEscaping) {
     InitialConditions ic = LoadFixture("barely_escaping.json");
     ic.particleRadius = 5.0;
 
     auto trace = engine.getTrace(ic.world, ic.particleStartPos, ic.particleStartVel, 0.0, 5000.0);
 
-    GameLoop<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
+    ParticleSimulator<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
     loop.getEngine().bounceDamping = 0.8;
 
     verifyTraceMatch(loop, trace);
 }
 
-TEST_F(GameLoopTest, OrbitalInsertionBurn) {
+TEST_F(ParticleSimulatorTest, OrbitalInsertionBurn) {
     InitialConditions ic = LoadFixture("orbital_insertion_burn.json");
     ic.particleRadius = 5.0;
     
@@ -183,12 +183,12 @@ TEST_F(GameLoopTest, OrbitalInsertionBurn) {
     // Generate Stage 2 trace (Orbit Insertion)
     auto trace2 = engine.getTrace(ic.world, currentPos, currentVel, 0.0, 2000.0);
     // Note: trace2 time will range from 0.0 to 2000.0, but in the game loop it will be from 100.0 to 2100.0
-    // So we manually adjust trace2 times to match GameLoop timeline
+    // So we manually adjust trace2 times to match ParticleSimulator timeline
     for (auto& t : trace2) {
         t.time += maneuvers[0].frame;
     }
     
-    GameLoop<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
+    ParticleSimulator<EulerIntegrator, CircleCollisionDetector, InelasticCollisionResolver> loop(ic);
     loop.getEngine().bounceDamping = 0.8;
     
     // 1. Verify Stage 1

@@ -9,7 +9,7 @@
 namespace GravityBilliards {
 
 /**
- * @class GameLoop
+ * @class ParticleSimulator
  * @brief Manages the tick-by-tick simulation state and command queuing.
  * 
  * Provides a decoupled architectural layer, allowing external UI/Peripheral modules
@@ -17,7 +17,7 @@ namespace GravityBilliards {
  * physical integration details.
  */
 template <typename TIntegrator, typename TDetector, typename TResolver>
-class GameLoop {
+class ParticleSimulator {
 private:
     PhysicsEngine<TIntegrator, TDetector, TResolver> m_engine;
     World m_world;
@@ -38,7 +38,7 @@ public:
      * @param detector The collision detection strategy.
      * @param resolver The collision resolution strategy.
      */
-    GameLoop(const InitialConditions& ic, 
+    ParticleSimulator(const InitialConditions& ic, 
              TIntegrator integrator = TIntegrator(), 
              TDetector detector = TDetector(), 
              TResolver resolver = TResolver())
