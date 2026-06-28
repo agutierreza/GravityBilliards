@@ -98,6 +98,15 @@ struct Vector2D {
     }
 
     /**
+     * @brief Calculates the squared Euclidean distance between this vector and another.
+     * @param other The target vector/position.
+     * @return The squared distance.
+     */
+    double distanceSquaredTo(const Vector2D& other) const {
+        return (*this - other).magnitudeSquared();
+    }
+
+    /**
      * @brief Calculates the dot product of this vector and another.
      * @param other The target vector.
      * @return The scalar dot product.
