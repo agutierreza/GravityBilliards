@@ -58,6 +58,7 @@ add_executable(GravityBilliardsTests
     test/test_e2e_scenarios.cpp
     test/test_e2e_toroidal.cpp
     test/test_particle_simulator.cpp
+    test/test_toroidal_camera.cpp
     test/test_simulation_runner.cpp
     test/test_game_orchestrator.cpp
     test/test_geometry.cpp
