@@ -37,6 +37,7 @@ add_executable(GravityBilliardsUI src/ui_main.cpp)
 target_link_libraries(GravityBilliardsUI PRIVATE GravityBilliardsPhysics raylib)
 
 
+
 # CLI Tool
 add_executable(GravityBilliardsCLI test/main.cpp)
 target_link_libraries(GravityBilliardsCLI PRIVATE GravityBilliardsPhysics)
@@ -55,6 +56,7 @@ add_executable(GravityBilliardsTests
     test/test_collision_detector.cpp
     test/test_collision_resolver.cpp
     test/test_e2e_scenarios.cpp
+    test/test_e2e_toroidal.cpp
     test/test_particle_simulator.cpp
     test/test_simulation_runner.cpp
     test/test_game_orchestrator.cpp
@@ -62,7 +64,7 @@ add_executable(GravityBilliardsTests
     test/test_trajectories.cpp
     test/test_spatial_grid.cpp
     test/test_world.cpp
-    src/GameOrchestrator.cpp
+    test/test_topology.cpp
 )
 target_link_libraries(GravityBilliardsTests PRIVATE GravityBilliardsPhysics gtest_main)
 

@@ -3,6 +3,7 @@
 #include "GravityBilliards/World.hpp"
 #include "GravityBilliards/Vector2D.hpp"
 #include "GravityBilliards/CollisionTypes.hpp"
+#include "GravityBilliards/Topology.hpp"
 #include <vector>
 #include <optional>
 #include <cmath>
@@ -36,7 +37,7 @@ struct IntegratorResult {
  * 
  * Uses Static Polymorphism (Templates) for maximum performance.
  */
-template <typename TIntegrator, typename TDetector, typename TResolver>
+template <typename TIntegrator, typename TDetector, typename TResolver, typename TTopology = EuclideanTopology>
 class PhysicsEngine {
 public:
     /**
@@ -75,13 +76,19 @@ public:
     TResolver collisionResolver;
 
     /**
+     * @brief The topology defining space and distance.
+     */
+    TTopology topology;
+
+    /**
      * @brief Constructs a PhysicsEngine with specific strategies.
      * @param integrator The underlying mathematical integrator to use.
      * @param detector The collision detection strategy.
      * @param resolver The collision resolution strategy.
+     * @param topology The topology of the space.
      */
-    PhysicsEngine(TIntegrator integrator, TDetector detector, TResolver resolver)
-        : integrator(std::move(integrator)), collisionDetector(std::move(detector)), collisionResolver(std::move(resolver)) {}
+    PhysicsEngine(TIntegrator integrator, TDetector detector, TResolver resolver, TTopology topology = TTopology{})
+        : integrator(std::move(integrator)), collisionDetector(std::move(detector)), collisionResolver(std::move(resolver)), topology(std::move(topology)) {}
 
     /**
      * @brief Performs a single integration step, handling gravity and collision.
@@ -97,13 +104,16 @@ public:
     void step(const World& world, Vector2D& pos, Vector2D& vel) const {
         Vector2D accel{0.0, 0.0};
         for (const auto& attractor : world.attractors) {
-            double dist = pos.distanceTo(attractor.position);
-            double cubeDistance = dist * dist * dist;
+            Vector2D dir = topology.getShortestDirection(pos, attractor.position);
+            double distSq = dir.x * dir.x + dir.y * dir.y;
+            double dist = std::sqrt(distSq);
+            double cubeDistance = dist * distSq;
             if (cubeDistance > 0.0001) { 
-                accel += (attractor.position - pos) * (static_cast<double>(attractor.mass) / cubeDistance);
+                accel += dir * (static_cast<double>(attractor.mass) / cubeDistance);
             }
         }
         integrator.integrate(pos, vel, accel, dt);
+        topology.wrapPosition(pos);
 
         auto collision = collisionDetector.checkCollision(world, pos, particleRadius);
         if (collision.has_value()) {
