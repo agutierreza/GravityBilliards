@@ -13,6 +13,7 @@ struct CollisionInfo {
     Vector2D normal;       ///< The normalized direction pointing out from the surface of impact.
     double penetration;    ///< The depth of penetration, used to resolve sticking.
     double surfaceBounciness = 1.0; ///< The local bounciness of the hit object.
+    int hitAttractorIndex = -1;     ///< The index of the attractor that was hit.
 };
 
 } // namespace GravityBilliards

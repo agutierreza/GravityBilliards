@@ -14,6 +14,7 @@ struct GameEntity {
     GravityBilliards::Vector2D position;
     GravityBilliards::Vector2D velocity;
     double radius = 5.0;
+    double mass = 1.0;
     bool active = true;
 
     // Behavior Flags

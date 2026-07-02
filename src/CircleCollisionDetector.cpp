@@ -3,7 +3,8 @@
 namespace GravityBilliards {
 
 std::optional<CollisionInfo> CircleCollisionDetector::checkCollision(const World& world, const Vector2D& pos, double particleRadius) const {
-    for (const auto& attractor : world.attractors) {
+    for (size_t i = 0; i < world.attractors.size(); ++i) {
+        const auto& attractor = world.attractors[i];
         double dist = pos.distanceTo(attractor.position);
         double minSafeDistance = attractor.radius + particleRadius;
         
@@ -12,6 +13,7 @@ std::optional<CollisionInfo> CircleCollisionDetector::checkCollision(const World
             info.normal = (pos - attractor.position).normalized();
             info.penetration = minSafeDistance - dist;
             info.surfaceBounciness = attractor.surfaceBounciness;
+            info.hitAttractorIndex = static_cast<int>(i);
             return info;
         }
     }

@@ -36,7 +36,12 @@ FetchContent_MakeAvailable(raylib)
 add_executable(GravityBilliardsUI src/ui_main.cpp)
 target_link_libraries(GravityBilliardsUI PRIVATE GravityBilliardsPhysics raylib)
 
-
+# Simple Game Executable
+add_executable(GravityBilliardsGame 
+    src/game_main.cpp
+)
+target_include_directories(GravityBilliardsGame PRIVATE include include/Game)
+target_link_libraries(GravityBilliardsGame PRIVATE GravityBilliardsPhysics raylib)
 
 # CLI Tool
 add_executable(GravityBilliardsCLI test/main.cpp)

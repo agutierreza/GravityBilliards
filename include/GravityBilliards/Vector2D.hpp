@@ -64,6 +64,13 @@ struct Vector2D {
     Vector2D& operator+=(const Vector2D& other) { x += other.x; y += other.y; return *this; }
 
     /**
+     * @brief Subtracts another vector from this one in place.
+     * @param other Vector to subtract.
+     * @return Reference to this vector.
+     */
+    Vector2D& operator-=(const Vector2D& other) { x -= other.x; y -= other.y; return *this; }
+
+    /**
      * @brief Calculates the exact length (magnitude) of the vector.
      * @return The magnitude as a double.
      */
