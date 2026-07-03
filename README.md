@@ -24,6 +24,8 @@ The project builds three separate targets:
    A terminal-based diagnostic tool. It loads JSON configurations to simulate physics initial conditions headless, generating automated SVGs, traces, and performance benchmarks for regression testing.
 3. **`GravityBilliardsUI` (Graphical Sandbox)**
    An interactive Raylib visual debugger and playground. It provides a synthwave-themed UI to tweak vectors, masses, and thresholds in real-time, functioning primarily as a visual "scrubber" and testing tool for the core physics math.
+4. **`SpaceGolfExample` (Example Game Prototype)**
+   A playable space golf prototype demonstrating how to wrap the core physics engine with a game loop, custom entity management, and win/loss conditions. Located in the `examples/` directory.
 
 ## Building the Project
 

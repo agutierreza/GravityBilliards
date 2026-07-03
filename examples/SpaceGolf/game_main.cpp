@@ -11,7 +11,7 @@
 #include "GravityBilliards/Geometry.hpp"
 #include "GravityBilliards/Trajectories.hpp"
 #include "GravityBilliards/Topology.hpp"
-#include "Game/GameOrchestrator.hpp"
+#include "GameOrchestrator.hpp"
 #include "Graphics/ToroidalCamera.hpp"
 #include <variant>
 

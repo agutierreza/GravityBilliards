@@ -37,11 +37,11 @@ add_executable(GravityBilliardsUI src/ui_main.cpp)
 target_link_libraries(GravityBilliardsUI PRIVATE GravityBilliardsPhysics raylib)
 
 # Simple Game Executable
-add_executable(GravityBilliardsGame 
-    src/game_main.cpp
+add_executable(SpaceGolfExample 
+    examples/SpaceGolf/game_main.cpp
 )
-target_include_directories(GravityBilliardsGame PRIVATE include include/Game)
-target_link_libraries(GravityBilliardsGame PRIVATE GravityBilliardsPhysics raylib)
+target_include_directories(SpaceGolfExample PRIVATE include examples/SpaceGolf src)
+target_link_libraries(SpaceGolfExample PRIVATE GravityBilliardsPhysics raylib)
 
 # CLI Tool
 add_executable(GravityBilliardsCLI test/main.cpp)
@@ -65,7 +65,6 @@ add_executable(GravityBilliardsTests
     test/test_particle_simulator.cpp
     test/test_toroidal_camera.cpp
     test/test_simulation_runner.cpp
-    test/test_game_orchestrator.cpp
     test/test_geometry.cpp
     test/test_trajectories.cpp
     test/test_spatial_grid.cpp

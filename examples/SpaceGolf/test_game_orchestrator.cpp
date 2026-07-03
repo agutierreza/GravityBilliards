@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "Game/GameOrchestrator.hpp"
+#include "GameOrchestrator.hpp"
 #include "GravityBilliards/EulerIntegrator.hpp"
 #include "GravityBilliards/CircleCollisionDetector.hpp"
 
