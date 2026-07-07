@@ -115,7 +115,7 @@ public:
         integrator.integrate(pos, vel, accel, dt);
         topology.wrapPosition(pos);
 
-        auto collision = collisionDetector.checkCollision(world, pos, particleRadius);
+        auto collision = collisionDetector.checkCollision(world, pos, particleRadius, topology);
         if (collision.has_value()) {
             collisionResolver.resolve(*collision, pos, vel, accel, bounceDamping, dt);
         }

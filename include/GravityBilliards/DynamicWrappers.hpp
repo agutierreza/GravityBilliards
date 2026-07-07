@@ -14,8 +14,8 @@ namespace GravityBilliards {
  */
 struct DynamicDetector {
     std::shared_ptr<ICollisionDetector> ptr;
-    std::optional<CollisionInfo> checkCollision(const World& world, const Vector2D& pos, double radius) const {
-        return ptr ? ptr->checkCollision(world, pos, radius) : std::nullopt;
+    std::optional<CollisionInfo> checkCollision(const World& world, const Vector2D& pos, double radius, const ITopology& topology) const {
+        return ptr ? ptr->checkCollision(world, pos, radius, topology) : std::nullopt;
     }
 };
 

@@ -18,9 +18,10 @@ public:
      * @param world The world containing the attractors.
      * @param pos Current position of the particle.
      * @param particleRadius Radius of the particle.
+     * @param topology The spatial topology of the world.
      * @return A valid CollisionInfo if an intersection is found, otherwise std::nullopt.
      */
-    std::optional<CollisionInfo> checkCollision(const World& world, const Vector2D& pos, double particleRadius) const override;
+    std::optional<CollisionInfo> checkCollision(const World& world, const Vector2D& pos, double particleRadius, const ITopology& topology) const override;
 };
 
 } // namespace GravityBilliards

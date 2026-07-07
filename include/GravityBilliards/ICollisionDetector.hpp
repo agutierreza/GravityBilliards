@@ -6,6 +6,8 @@
 
 namespace GravityBilliards {
 
+class ITopology;
+
 /**
  * @class ICollisionDetector
  * @brief Pure virtual interface for collision detection logic.
@@ -19,9 +21,10 @@ public:
      * @param world The world containing the attractors.
      * @param pos Current position of the particle.
      * @param particleRadius Radius of the particle.
+     * @param topology The spatial topology of the world.
      * @return A valid CollisionInfo if a collision occurred, otherwise std::nullopt.
      */
-    virtual std::optional<CollisionInfo> checkCollision(const World& world, const Vector2D& pos, double particleRadius) const = 0;
+    virtual std::optional<CollisionInfo> checkCollision(const World& world, const Vector2D& pos, double particleRadius, const ITopology& topology) const = 0;
 };
 
 } // namespace GravityBilliards
