@@ -14,7 +14,7 @@ using namespace GravityBilliards;
 namespace {
 
 InitialConditions LoadFixture(const std::string& filename) {
-    std::ifstream f("../test/fixtures/" + filename);
+    std::ifstream f("test/fixtures/" + filename);
     if (!f.is_open()) throw std::runtime_error("Could not open fixture: " + filename);
     nlohmann::json j;
     f >> j;
@@ -158,7 +158,7 @@ TEST_F(ParticleSimulatorTest, OrbitalInsertionBurn) {
     // Load maneuvers JSON manually
     struct Maneuver { double frame; Vector2D deltaV; };
     std::vector<Maneuver> maneuvers;
-    std::ifstream f("../test/fixtures/orbital_insertion_burn_maneuvers.json");
+    std::ifstream f("test/fixtures/orbital_insertion_burn_maneuvers.json");
     if (f.is_open()) {
         nlohmann::json j;
         f >> j;

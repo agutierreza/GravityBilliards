@@ -74,7 +74,8 @@ add_executable(GravityBilliardsTests
 target_link_libraries(GravityBilliardsTests PRIVATE GravityBilliardsPhysics gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(GravityBilliardsTests)
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/test/fixtures" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/test")
+gtest_discover_tests(GravityBilliardsTests WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 
 
 find_package(Doxygen)

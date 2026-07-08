@@ -14,7 +14,7 @@ using namespace GravityBilliards;
 
 // Helper function to load fixture
 InitialConditions LoadFixture(const std::string& filename) {
-    std::ifstream f("../test/fixtures/" + filename);
+    std::ifstream f("test/fixtures/" + filename);
     if (!f.is_open()) throw std::runtime_error("Could not open fixture: " + filename);
     nlohmann::json j;
     f >> j;
@@ -124,7 +124,7 @@ TEST_F(EndToEndTest, OrbitalInsertionBurn) {
     std::vector<Maneuver> maneuvers;
     
     // Load maneuvers JSON manually
-    std::ifstream f("../test/fixtures/orbital_insertion_burn_maneuvers.json");
+    std::ifstream f("test/fixtures/orbital_insertion_burn_maneuvers.json");
     if (f.is_open()) {
         nlohmann::json j;
         f >> j;

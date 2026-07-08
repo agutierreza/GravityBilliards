@@ -134,7 +134,7 @@ TEST_P(EndToEndTorusTest, OrbitalInsertionBurn) {
     struct Maneuver { double frame; Vector2D deltaV; };
     std::vector<Maneuver> maneuvers;
     
-    std::ifstream f("../test/fixtures/orbital_insertion_burn_maneuvers.json");
+    std::ifstream f("test/fixtures/orbital_insertion_burn_maneuvers.json");
     if (f.is_open()) {
         nlohmann::json j;
         f >> j;
